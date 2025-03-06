@@ -9,14 +9,15 @@ const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // Check for saved theme preference or default to light mode
+    // Check for saved theme preference
     const savedTheme = localStorage.getItem('theme');
     
     if (savedTheme === 'dark') {
+      // Only set dark mode if explicitly saved as dark
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
     } else {
-      // Default to light mode
+      // Default to light mode for any other case (null, 'light', etc.)
       setIsDarkMode(false);
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');

@@ -3,6 +3,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force light mode as default by removing any dark class at load time */
+:root {
+  color-scheme: light;
+}
+
 @layer base {
   :root {
     --background: 220 33% 98%;
