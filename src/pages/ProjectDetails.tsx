@@ -1,11 +1,13 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Check, Pencil, Plus, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import PageTransition from '@/components/PageTransition';
-import { Project, ProjectStage, Task } from '@/lib/types';
+import { Project, ProjectStage, Task, TaskStatus } from '@/lib/types';
 import StageColumn from '@/components/StageColumn';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
@@ -27,6 +29,7 @@ const mockProject: Project = {
       title: 'Create wireframes',
       description: 'Design initial wireframes for homepage and key pages',
       stage: 'Design',
+      status: 'In Progress',
       priority: 'high',
       assignee: 'Jane Smith',
       comments: [
@@ -51,6 +54,7 @@ const mockProject: Project = {
       title: 'Content inventory',
       description: 'Catalog all existing content and identify gaps',
       stage: 'Preparation',
+      status: 'Completed',
       priority: 'medium',
       assignee: 'Alex Johnson',
       comments: [],
@@ -62,6 +66,7 @@ const mockProject: Project = {
       title: 'Competitor analysis',
       description: 'Review competitor websites and identify opportunities',
       stage: 'Analysis',
+      status: 'In Review',
       priority: 'medium',
       assignee: 'Jane Smith',
       comments: [
@@ -80,6 +85,7 @@ const mockProject: Project = {
       title: 'Setup development environment',
       description: 'Configure development, staging, and production environments',
       stage: 'Development',
+      status: 'Completed',
       priority: 'low',
       assignee: 'John Doe',
       comments: [],
@@ -91,6 +97,7 @@ const mockProject: Project = {
       title: 'Backend API integration',
       description: 'Connect frontend to backend API services',
       stage: 'Development',
+      status: 'In Progress',
       priority: 'high',
       assignee: 'John Doe',
       comments: [],
@@ -102,6 +109,7 @@ const mockProject: Project = {
       title: 'User testing plan',
       description: 'Create test scenarios and recruit test participants',
       stage: 'Testing',
+      status: 'Backlog',
       priority: 'medium',
       assignee: 'Emily Chen',
       comments: [],
@@ -113,6 +121,7 @@ const mockProject: Project = {
       title: 'Stakeholder presentation',
       description: 'Prepare and deliver presentation to key stakeholders',
       stage: 'Preparation',
+      status: 'Blocked',
       priority: 'high',
       assignee: 'Jane Smith',
       comments: [],
@@ -124,6 +133,7 @@ const mockProject: Project = {
       title: 'DNS Configuration',
       description: 'Setup DNS records for the new website',
       stage: 'Go Live',
+      status: 'Backlog',
       priority: 'urgent',
       assignee: 'John Doe',
       comments: [
@@ -148,6 +158,7 @@ const mockProject: Project = {
       title: 'Client UAT session',
       description: 'Conduct user acceptance testing with the client team',
       stage: 'UAT',
+      status: 'In Progress',
       priority: 'high',
       assignee: 'Emily Chen',
       comments: [],
@@ -184,6 +195,29 @@ const ProjectDetails = () => {
     'Go Live'
   ];
 
+  const statuses: TaskStatus[] = [
+    'Backlog',
+    'In Progress',
+    'Blocked',
+    'In Review',
+    'Completed'
+  ];
+
+  const moveTask = useCallback((taskId: string, newStatus: TaskStatus) => {
+    if (!project) return;
+
+    setProject(prevProject => {
+      if (!prevProject) return prevProject;
+
+      return {
+        ...prevProject,
+        tasks: prevProject.tasks.map(task => 
+          task.id === taskId ? { ...task, status: newStatus } : task
+        )
+      };
+    });
+  }, [project]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -211,8 +245,8 @@ const ProjectDetails = () => {
     );
   }
 
-  const getTasksByStage = (stage: ProjectStage) => {
-    return project.tasks.filter(task => task.stage === stage);
+  const getTasksByStageAndStatus = (stage: ProjectStage, status: TaskStatus) => {
+    return project.tasks.filter(task => task.stage === stage && task.status === status);
   };
 
   return (
@@ -288,13 +322,20 @@ const ProjectDetails = () => {
               
               {stages.map((stage) => (
                 <TabsContent key={stage} value={stage} className="mt-0 border-0 p-0">
-                  <div className="flex gap-6 min-h-[70vh]">
-                    <StageColumn
-                      stage={stage}
-                      tasks={getTasksByStage(stage)}
-                      index={0}
-                    />
-                  </div>
+                  <DndProvider backend={HTML5Backend}>
+                    <div className="grid grid-cols-5 gap-4 min-h-[70vh] overflow-x-auto">
+                      {statuses.map((status, statusIndex) => (
+                        <StageColumn
+                          key={`${stage}-${status}`}
+                          stage={stage}
+                          status={status}
+                          tasks={getTasksByStageAndStatus(stage, status)}
+                          index={statusIndex}
+                          onDropTask={(taskId) => moveTask(taskId, status)}
+                        />
+                      ))}
+                    </div>
+                  </DndProvider>
                 </TabsContent>
               ))}
             </Tabs>

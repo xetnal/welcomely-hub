@@ -7,6 +7,7 @@ import PriorityBadge from './PriorityBadge';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import CommentSection from './CommentSection';
+import { useDrag } from 'react-dnd';
 
 interface TaskCardProps {
   task: Task;
@@ -15,6 +16,14 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
   const [showComments, setShowComments] = useState(false);
+  
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'task',
+    item: { id: task.id },
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  }));
 
   return (
     <motion.div
@@ -25,7 +34,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
         delay: index * 0.05,
         ease: [0.22, 1, 0.36, 1]
       }}
-      className="bg-white rounded-lg border shadow-sm p-4 mb-3"
+      className={`bg-white rounded-lg border shadow-sm p-4 mb-3 cursor-move ${isDragging ? 'opacity-50' : ''}`}
+      ref={drag}
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="font-medium">{task.title}</h3>

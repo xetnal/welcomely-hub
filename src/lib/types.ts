@@ -10,6 +10,13 @@ export type ProjectStage =
   | 'UAT'
   | 'Go Live';
 
+export type TaskStatus = 
+  | 'Backlog'
+  | 'In Progress'
+  | 'Blocked'
+  | 'In Review'
+  | 'Completed';
+
 export interface Comment {
   id: string;
   author: string;
@@ -22,6 +29,7 @@ export interface Task {
   title: string;
   description: string;
   stage: ProjectStage;
+  status: TaskStatus;
   priority: Priority;
   assignee?: string;
   comments: Comment[];
