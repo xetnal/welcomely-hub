@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, Check, Pencil, Plus, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, LayoutKanban, List, Pencil, Plus, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
@@ -9,6 +9,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import PageTransition from '@/components/PageTransition';
 import { Project, ProjectStage, Task, TaskStatus } from '@/lib/types';
 import StageColumn from '@/components/StageColumn';
+import TaskListView from '@/components/TaskListView';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -173,6 +174,7 @@ const ProjectDetails = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeStage, setActiveStage] = useState<ProjectStage>('Development');
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   useEffect(() => {
     // In a real app, we would fetch the project data from an API
@@ -251,8 +253,16 @@ const ProjectDetails = () => {
     return project.tasks.filter(task => task.stage === stage && task.status === status);
   };
 
+  const getTasksByStage = (stage: ProjectStage) => {
+    return project.tasks.filter(task => task.stage === stage);
+  };
+
+  const toggleViewMode = () => {
+    setViewMode(prevMode => prevMode === 'kanban' ? 'list' : 'kanban');
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col dark:bg-background">
       <Navbar />
       
       <PageTransition className="flex-1 flex flex-col overflow-hidden">
@@ -296,7 +306,7 @@ const ProjectDetails = () => {
           </div>
           
           <div className="mb-6">
-            <div className="glass p-4 rounded-lg">
+            <div className="glass p-4 rounded-lg dark:bg-muted/20">
               <h2 className="text-sm font-medium mb-2">Description</h2>
               <p className="text-sm text-muted-foreground">{project.description}</p>
             </div>
@@ -307,10 +317,30 @@ const ProjectDetails = () => {
           <div className="container">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-medium">Project Stages</h2>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                <Plus className="h-4 w-4" />
-                <span>Add Task</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={toggleViewMode}
+                  className="flex items-center gap-1"
+                >
+                  {viewMode === 'kanban' ? (
+                    <>
+                      <List className="h-4 w-4" />
+                      <span>List View</span>
+                    </>
+                  ) : (
+                    <>
+                      <LayoutKanban className="h-4 w-4" />
+                      <span>Kanban View</span>
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Plus className="h-4 w-4" />
+                  <span>Add Task</span>
+                </Button>
+              </div>
             </div>
             
             <Tabs defaultValue={activeStage} onValueChange={(value) => setActiveStage(value as ProjectStage)} className="w-full">
@@ -324,20 +354,24 @@ const ProjectDetails = () => {
               
               {stages.map((stage) => (
                 <TabsContent key={stage} value={stage} className="mt-0 border-0 p-0">
-                  <DndProvider backend={HTML5Backend}>
-                    <div className="grid grid-cols-5 gap-4 min-h-[70vh] overflow-x-auto">
-                      {statuses.map((status, statusIndex) => (
-                        <StageColumn
-                          key={`${stage}-${status}`}
-                          stage={stage}
-                          status={status}
-                          tasks={getTasksByStageAndStatus(stage, status)}
-                          index={statusIndex}
-                          onDropTask={moveTask}
-                        />
-                      ))}
-                    </div>
-                  </DndProvider>
+                  {viewMode === 'kanban' ? (
+                    <DndProvider backend={HTML5Backend}>
+                      <div className="grid grid-cols-5 gap-4 min-h-[70vh] overflow-x-auto">
+                        {statuses.map((status, statusIndex) => (
+                          <StageColumn
+                            key={`${stage}-${status}`}
+                            stage={stage}
+                            status={status}
+                            tasks={getTasksByStageAndStatus(stage, status)}
+                            index={statusIndex}
+                            onDropTask={moveTask}
+                          />
+                        ))}
+                      </div>
+                    </DndProvider>
+                  ) : (
+                    <TaskListView tasks={getTasksByStage(stage)} />
+                  )}
                 </TabsContent>
               ))}
             </Tabs>
