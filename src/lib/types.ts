@@ -35,6 +35,7 @@ export interface Task {
   comments: Comment[];
   created: Date;
   updated: Date;
+  isClientTask?: boolean;
 }
 
 export interface Project {

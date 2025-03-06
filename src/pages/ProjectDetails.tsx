@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TaskListView from '@/components/TaskListView';
+import AddTaskModal from '@/components/AddTaskModal';
+import { Toaster } from 'sonner';
 
 const mockProject: Project = {
   id: '1',
@@ -173,6 +175,7 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(true);
   const [activeStage, setActiveStage] = useState<ProjectStage>('Development');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -214,6 +217,36 @@ const ProjectDetails = () => {
         tasks: prevProject.tasks.map(task => 
           task.id === taskId ? { ...task, status: newStatus } : task
         )
+      };
+    });
+  }, [project]);
+
+  const addTask = useCallback((newTask: Task) => {
+    if (!project) return;
+    
+    console.log('Adding new task:', newTask);
+    
+    setProject(prevProject => {
+      if (!prevProject) return prevProject;
+
+      return {
+        ...prevProject,
+        tasks: [...prevProject.tasks, newTask]
+      };
+    });
+  }, [project]);
+
+  const deleteTask = useCallback((taskId: string) => {
+    if (!project) return;
+    
+    console.log(`Deleting task ${taskId}`);
+    
+    setProject(prevProject => {
+      if (!prevProject) return prevProject;
+
+      return {
+        ...prevProject,
+        tasks: prevProject.tasks.filter(task => task.id !== taskId)
       };
     });
   }, [project]);
@@ -261,6 +294,7 @@ const ProjectDetails = () => {
     <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
         <Navbar />
+        <Toaster position="top-center" />
         
         <PageTransition className="flex-1 flex flex-col overflow-hidden">
           <div className="container py-6">
@@ -333,7 +367,12 @@ const ProjectDetails = () => {
                       </>
                     )}
                   </Button>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => setIsAddModalOpen(true)}
+                  >
                     <Plus className="h-4 w-4" />
                     <span>Add Task</span>
                   </Button>
@@ -361,6 +400,8 @@ const ProjectDetails = () => {
                             tasks={getTasksByStageAndStatus(stage, status)}
                             index={statusIndex}
                             onDropTask={moveTask}
+                            onAddTask={addTask}
+                            onDeleteTask={deleteTask}
                           />
                         ))}
                       </div>
@@ -373,6 +414,13 @@ const ProjectDetails = () => {
             </div>
           </div>
         </PageTransition>
+
+        <AddTaskModal
+          open={isAddModalOpen}
+          onOpenChange={setIsAddModalOpen}
+          stage={activeStage}
+          onAddTask={addTask}
+        />
       </div>
     </DndProvider>
   );
