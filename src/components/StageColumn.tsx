@@ -11,7 +11,7 @@ interface StageColumnProps {
   status: TaskStatus;
   tasks: Task[];
   index: number;
-  onDropTask: (taskId: string) => void;
+  onDropTask: (taskId: string, status: TaskStatus) => void;
 }
 
 const StatusIcons: Record<TaskStatus, string> = {
@@ -23,16 +23,16 @@ const StatusIcons: Record<TaskStatus, string> = {
 };
 
 const StageColumn: React.FC<StageColumnProps> = ({ stage, status, tasks, index, onDropTask }) => {
-  const [{ isOver }, drop] = useDrop(() => ({
+  const [{ isOver }, drop] = useDrop({
     accept: 'task',
     drop: (item: { id: string }) => {
-      onDropTask(item.id);
-      return { name: `${status} Dropzone` };
+      onDropTask(item.id, status);
+      return { status };
     },
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
     }),
-  }));
+  });
 
   return (
     <motion.div

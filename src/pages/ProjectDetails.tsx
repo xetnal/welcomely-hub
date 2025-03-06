@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// Mock data for a single project
+// Mock data for a single project with string replacements to fix apostrophe issues
 const mockProject: Project = {
   id: '1',
   name: 'Website Redesign',
@@ -205,7 +205,9 @@ const ProjectDetails = () => {
 
   const moveTask = useCallback((taskId: string, newStatus: TaskStatus) => {
     if (!project) return;
-
+    
+    console.log(`Moving task ${taskId} to status: ${newStatus}`);
+    
     setProject(prevProject => {
       if (!prevProject) return prevProject;
 
@@ -331,7 +333,7 @@ const ProjectDetails = () => {
                           status={status}
                           tasks={getTasksByStageAndStatus(stage, status)}
                           index={statusIndex}
-                          onDropTask={(taskId) => moveTask(taskId, status)}
+                          onDropTask={moveTask}
                         />
                       ))}
                     </div>

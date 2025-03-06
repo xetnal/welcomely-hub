@@ -34,7 +34,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
         delay: index * 0.05,
         ease: [0.22, 1, 0.36, 1]
       }}
-      className={`bg-white rounded-lg border shadow-sm p-4 mb-3 cursor-move ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-white rounded-lg border shadow-sm p-4 mb-3 ${isDragging ? 'opacity-50' : ''}`}
       ref={drag}
     >
       <div className="flex justify-between items-start mb-2">
@@ -42,7 +42,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
         <div className="flex gap-2 items-center">
           <PriorityBadge priority={task.priority} />
           <Popover>
-            <PopoverTrigger>
+            <PopoverTrigger asChild>
               <button className="p-1 rounded-full hover:bg-muted text-muted-foreground">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
