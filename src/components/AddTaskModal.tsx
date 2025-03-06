@@ -77,7 +77,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-background">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">Add New Task</DialogTitle>
           <Button 
@@ -136,7 +136,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                 <SelectTrigger>
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-gray-900">
+                <SelectContent>
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="high">High</SelectItem>
@@ -154,7 +154,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                 <SelectTrigger>
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-gray-900">
+                <SelectContent>
                   <SelectItem value="">Unassigned</SelectItem>
                   {employees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.name}>
