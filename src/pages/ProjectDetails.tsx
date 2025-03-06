@@ -258,100 +258,100 @@ const ProjectDetails = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
-      <Navbar />
-      
-      <PageTransition className="flex-1 flex flex-col overflow-hidden">
-        <div className="container py-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link to="/" className="p-2 rounded-full hover:bg-muted transition-colors dark:hover:bg-gray-800">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold">{project.name}</h1>
-                <p className="text-muted-foreground dark:text-gray-400">Client: {project.client}</p>
+    <DndProvider backend={HTML5Backend}>
+      <div className="min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
+        <Navbar />
+        
+        <PageTransition className="flex-1 flex flex-col overflow-hidden">
+          <div className="container py-6">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Link to="/" className="p-2 rounded-full hover:bg-muted transition-colors dark:hover:bg-gray-800">
+                  <ArrowLeft className="h-5 w-5" />
+                </Link>
+                <div>
+                  <h1 className="text-2xl font-bold">{project.name}</h1>
+                  <p className="text-muted-foreground dark:text-gray-400">Client: {project.client}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400">
+                  <User className="h-4 w-4" />
+                  <span>{project.developer}</span>
+                </div>
+                
+                <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400">
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    {format(project.startDate, 'MMM d')} - {format(project.endDate, 'MMM d, yyyy')}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" className="flex gap-1">
+                    <Pencil className="h-4 w-4" />
+                    <span>Edit</span>
+                  </Button>
+                  
+                  <Button size="sm" className="flex gap-1">
+                    <Check className="h-4 w-4" />
+                    <span>Complete</span>
+                  </Button>
+                </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400">
-                <User className="h-4 w-4" />
-                <span>{project.developer}</span>
-              </div>
-              
-              <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  {format(project.startDate, 'MMM d')} - {format(project.endDate, 'MMM d, yyyy')}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" className="flex gap-1">
-                  <Pencil className="h-4 w-4" />
-                  <span>Edit</span>
-                </Button>
-                
-                <Button size="sm" className="flex gap-1">
-                  <Check className="h-4 w-4" />
-                  <span>Complete</span>
-                </Button>
+            <div className="mb-6">
+              <div className="glass p-4 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+                <h2 className="text-sm font-medium mb-2">Description</h2>
+                <p className="text-sm text-muted-foreground dark:text-gray-400">{project.description}</p>
               </div>
             </div>
           </div>
           
-          <div className="mb-6">
-            <div className="glass p-4 rounded-lg dark:bg-gray-800 dark:border-gray-700">
-              <h2 className="text-sm font-medium mb-2">Description</h2>
-              <p className="text-sm text-muted-foreground dark:text-gray-400">{project.description}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex-1 overflow-auto pb-6">
-          <div className="container">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-medium">Project Stages</h2>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex items-center gap-1"
-                  onClick={toggleViewMode}
-                >
-                  {viewMode === 'kanban' ? (
-                    <>
-                      <List className="h-4 w-4" />
-                      <span>List View</span>
-                    </>
-                  ) : (
-                    <>
-                      <Layout className="h-4 w-4" />
-                      <span>Kanban View</span>
-                    </>
-                  )}
-                </Button>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <Plus className="h-4 w-4" />
-                  <span>Add Task</span>
-                </Button>
+          <div className="flex-1 overflow-auto pb-6">
+            <div className="container">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-medium">Project Stages</h2>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={toggleViewMode}
+                  >
+                    {viewMode === 'kanban' ? (
+                      <>
+                        <List className="h-4 w-4" />
+                        <span>List View</span>
+                      </>
+                    ) : (
+                      <>
+                        <Layout className="h-4 w-4" />
+                        <span>Kanban View</span>
+                      </>
+                    )}
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" />
+                    <span>Add Task</span>
+                  </Button>
+                </div>
               </div>
-            </div>
-            
-            <Tabs defaultValue={activeStage} onValueChange={(value) => setActiveStage(value as ProjectStage)} className="w-full">
-              <TabsList className="grid grid-cols-7 mb-8 dark:bg-gray-800">
-                {stages.map((stage) => (
-                  <TabsTrigger key={stage} value={stage} className="text-center dark:data-[state=active]:bg-gray-700 dark:text-gray-200 dark:data-[state=active]:text-white">
-                    {stage}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
               
-              {stages.map((stage) => (
-                <TabsContent key={stage} value={stage} className="mt-0 border-0 p-0">
-                  {viewMode === 'kanban' ? (
-                    <DndProvider backend={HTML5Backend} key={`dnd-${stage}`}>
+              <Tabs defaultValue={activeStage} onValueChange={(value) => setActiveStage(value as ProjectStage)} className="w-full">
+                <TabsList className="grid grid-cols-7 mb-8 dark:bg-gray-800">
+                  {stages.map((stage) => (
+                    <TabsTrigger key={stage} value={stage} className="text-center dark:data-[state=active]:bg-gray-700 dark:text-gray-200 dark:data-[state=active]:text-white">
+                      {stage}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {stages.map((stage) => (
+                  <TabsContent key={stage} value={stage} className="mt-0 border-0 p-0">
+                    {viewMode === 'kanban' ? (
                       <div className="grid grid-cols-5 gap-4 min-h-[70vh]">
                         {statuses.map((status, statusIndex) => (
                           <StageColumn
@@ -364,17 +364,17 @@ const ProjectDetails = () => {
                           />
                         ))}
                       </div>
-                    </DndProvider>
-                  ) : (
-                    <TaskListView tasks={getTasksByStage(stage)} />
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
+                    ) : (
+                      <TaskListView tasks={getTasksByStage(stage)} />
+                    )}
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </div>
           </div>
-        </div>
-      </PageTransition>
-    </div>
+        </PageTransition>
+      </div>
+    </DndProvider>
   );
 };
 
