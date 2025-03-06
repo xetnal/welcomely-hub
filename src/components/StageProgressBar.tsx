@@ -22,14 +22,20 @@ const StageProgressBar: React.FC<StageProgressBarProps> = ({ percentage }) => {
   const progressColor = getColor(normalizedPercentage);
 
   return (
-    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: `${normalizedPercentage}%` }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="h-full rounded-full"
-        style={{ backgroundColor: progressColor }}
-      />
+    <div className="w-full">
+      <div className="flex justify-between items-center mb-1 text-xs text-muted-foreground dark:text-gray-400">
+        <span>Overall Progress</span>
+        <span>{normalizedPercentage}%</span>
+      </div>
+      <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${normalizedPercentage}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="h-full rounded-full"
+          style={{ backgroundColor: progressColor }}
+        />
+      </div>
     </div>
   );
 };

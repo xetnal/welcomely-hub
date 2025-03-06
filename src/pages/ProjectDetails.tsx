@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Check, Pencil, Plus, User, List, Layout } from 'lucide-react';
@@ -27,7 +26,7 @@ const mockProject: Project = {
   endDate: new Date(2023, 9, 30),
   status: 'active',
   description: 'Complete website redesign with new branding, improved UX, and mobile-first approach.',
-  completedStages: [], // Initially, no stages are completed
+  completedStages: [],
   tasks: [
     {
       id: 't1',
@@ -272,7 +271,16 @@ const ProjectDetails = () => {
     });
   }, [project]);
 
-  // Calculate completion percentage for the current stage
+  const overallCompletionPercentage = useMemo(() => {
+    if (!project) return 0;
+    
+    const allTasks = project.tasks;
+    if (allTasks.length === 0) return 0;
+    
+    const completedTasks = allTasks.filter(task => task.status === 'Completed');
+    return Math.round((completedTasks.length / allTasks.length) * 100);
+  }, [project]);
+
   const stageCompletionPercentage = useMemo(() => {
     if (!project) return 0;
     
@@ -283,7 +291,6 @@ const ProjectDetails = () => {
     return Math.round((completedTasks.length / stageTasks.length) * 100);
   }, [project, activeStage]);
 
-  // Toggle stage completion status
   const toggleStageCompletion = useCallback((stage: ProjectStage) => {
     if (!project) return;
 
@@ -293,16 +300,13 @@ const ProjectDetails = () => {
       const completedStages = prevProject.completedStages || [];
       
       if (completedStages.includes(stage)) {
-        // Remove stage from completed stages
         return {
           ...prevProject,
           completedStages: completedStages.filter(s => s !== stage)
         };
       } else {
-        // Add stage to completed stages
         const newCompletedStages = [...completedStages, stage];
         
-        // Sort completed stages to match the order in the stages array
         newCompletedStages.sort((a, b) => {
           return stages.indexOf(a) - stages.indexOf(b);
         });
@@ -316,7 +320,6 @@ const ProjectDetails = () => {
     });
   }, [project, stages]);
 
-  // Check if a stage has pending tasks while being marked as completed
   const stageHasWarning = useCallback((stage: ProjectStage) => {
     if (!project || !project.completedStages?.includes(stage)) return false;
     
@@ -324,23 +327,19 @@ const ProjectDetails = () => {
     return stageTasks.some(task => task.status !== 'Completed');
   }, [project]);
 
-  // Check if there are pending tasks in any completed stage
   const hasWarningsInPreviousStages = useCallback((currentStage: ProjectStage) => {
     if (!project || !project.completedStages) return false;
     
-    // Get all stages before the current one that are marked as completed
     const previousCompletedStages = project.completedStages.filter(
       stage => stages.indexOf(stage) < stages.indexOf(currentStage)
     );
     
-    // Check if any of those stages have non-completed tasks
     return previousCompletedStages.some(stage => {
       const stageTasks = project.tasks.filter(task => task.stage === stage);
       return stageTasks.some(task => task.status !== 'Completed');
     });
   }, [project, stages]);
 
-  // Check if a stage is completed
   const isStageCompleted = useCallback((stage: ProjectStage) => {
     return project?.completedStages?.includes(stage) || false;
   }, [project]);
@@ -501,7 +500,7 @@ const ProjectDetails = () => {
                 <div className="mb-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 mr-4">
-                      <StageProgressBar percentage={stageCompletionPercentage} />
+                      <StageProgressBar percentage={overallCompletionPercentage} />
                     </div>
                     <StageCompletionButton 
                       stage={activeStage}
