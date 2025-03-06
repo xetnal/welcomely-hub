@@ -43,15 +43,15 @@ const StageColumn: React.FC<StageColumnProps> = ({ stage, status, tasks, index, 
         delay: index * 0.1,
         ease: [0.22, 1, 0.36, 1]
       }}
-      className={`flex-shrink-0 glass rounded-xl flex flex-col h-full ${isOver ? 'bg-muted/50' : ''} dark:bg-muted/10 dark:border-muted/20`}
+      className={`flex-shrink-0 glass rounded-xl flex flex-col h-full ${isOver ? 'bg-muted/50' : ''}`}
       ref={drop}
     >
-      <div className="p-3 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-sm z-10 border-b dark:bg-background/80 dark:border-border/20">
+      <div className="p-3 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-sm z-10 border-b">
         <div className="flex items-center gap-2">
           <div className={`h-3 w-3 rounded-full ${StatusIcons[status]}`}></div>
           <h3 className="font-medium">{status}</h3>
         </div>
-        <span className="text-xs px-2 py-1 bg-muted rounded-full text-muted-foreground dark:bg-muted/20">
+        <span className="text-xs px-2 py-1 bg-muted rounded-full text-muted-foreground">
           {tasks.length}
         </span>
       </div>
@@ -62,8 +62,8 @@ const StageColumn: React.FC<StageColumnProps> = ({ stage, status, tasks, index, 
         ))}
       </div>
       
-      <div className="p-3 border-t bg-white/40 dark:bg-background/40 dark:border-border/20">
-        <button className="flex items-center gap-1 text-sm w-full justify-center py-1.5 px-3 rounded-md hover:bg-muted transition-colors dark:hover:bg-muted/20">
+      <div className="p-3 border-t bg-white/40">
+        <button className="flex items-center gap-1 text-sm w-full justify-center py-1.5 px-3 rounded-md hover:bg-muted transition-colors">
           <Plus className="h-4 w-4" />
           <span>Add Task</span>
         </button>
