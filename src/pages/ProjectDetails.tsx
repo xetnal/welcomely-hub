@@ -38,7 +38,7 @@ const mockProject: Project = {
         {
           id: 'c2',
           author: 'Jane Smith',
-          content: 'Good point, I'll add that to the next iteration.',
+          content: "Good point, I'll add that to the next iteration.",
           timestamp: new Date(2023, 7, 20, 15, 45)
         }
       ],
