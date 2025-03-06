@@ -251,6 +251,23 @@ const ProjectDetails = () => {
     });
   }, [project]);
 
+  const editTask = useCallback((taskId: string, updatedTask: Partial<Task>) => {
+    if (!project) return;
+    
+    console.log(`Editing task ${taskId}:`, updatedTask);
+    
+    setProject(prevProject => {
+      if (!prevProject) return prevProject;
+
+      return {
+        ...prevProject,
+        tasks: prevProject.tasks.map(task => 
+          task.id === taskId ? { ...task, ...updatedTask } : task
+        )
+      };
+    });
+  }, [project]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -391,7 +408,7 @@ const ProjectDetails = () => {
                 {stages.map((stage) => (
                   <TabsContent key={stage} value={stage} className="mt-0 border-0 p-0">
                     {viewMode === 'kanban' ? (
-                      <div className="grid grid-cols-5 gap-4 min-h-[70vh]">
+                      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 min-h-[70vh]">
                         {statuses.map((status, statusIndex) => (
                           <StageColumn
                             key={`${stage}-${status}`}
@@ -402,6 +419,7 @@ const ProjectDetails = () => {
                             onDropTask={moveTask}
                             onAddTask={addTask}
                             onDeleteTask={deleteTask}
+                            onEditTask={editTask}
                           />
                         ))}
                       </div>

@@ -15,6 +15,7 @@ interface StageColumnProps {
   onDropTask: (taskId: string, status: TaskStatus) => void;
   onAddTask?: (newTask: any) => void;
   onDeleteTask?: (taskId: string) => void;
+  onEditTask?: (taskId: string, updatedTask: Partial<Task>) => void;
 }
 
 const StatusIcons: Record<TaskStatus, string> = {
@@ -32,7 +33,8 @@ const StageColumn: React.FC<StageColumnProps> = ({
   index, 
   onDropTask,
   onAddTask,
-  onDeleteTask
+  onDeleteTask,
+  onEditTask
 }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
@@ -77,6 +79,7 @@ const StageColumn: React.FC<StageColumnProps> = ({
               task={task} 
               index={idx} 
               onDeleteTask={onDeleteTask}
+              onEditTask={onEditTask}
             />
           ))}
         </div>

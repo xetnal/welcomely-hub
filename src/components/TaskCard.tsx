@@ -9,16 +9,24 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import CommentSection from './CommentSection';
 import { useDrag } from 'react-dnd';
 import DeleteTaskModal from './DeleteTaskModal';
+import EditTaskModal from './EditTaskModal';
 
 interface TaskCardProps {
   task: Task;
   index: number;
   onDeleteTask?: (taskId: string) => void;
+  onEditTask?: (taskId: string, updatedTask: Partial<Task>) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, index, onDeleteTask }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ 
+  task, 
+  index, 
+  onDeleteTask,
+  onEditTask
+}) => {
   const [showComments, setShowComments] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'task',
@@ -41,9 +49,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onDeleteTask }) => {
         className={`bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 shadow-sm p-4 mb-3 ${isDragging ? 'opacity-50' : ''}`}
         ref={drag}
       >
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-medium">{task.title}</h3>
-          <div className="flex gap-2 items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-2">
+          <h3 className="font-medium break-words">{task.title}</h3>
+          <div className="flex gap-2 items-center sm:flex-shrink-0">
             <PriorityBadge priority={task.priority} />
             <Popover>
               <PopoverTrigger asChild>
@@ -53,7 +61,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onDeleteTask }) => {
               </PopoverTrigger>
               <PopoverContent className="w-48 dark:bg-gray-800 dark:border-gray-700">
                 <div className="space-y-1">
-                  <button className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted dark:hover:bg-gray-700">
+                  <button 
+                    className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted dark:hover:bg-gray-700"
+                    onClick={() => setEditDialogOpen(true)}
+                  >
                     Edit Task
                   </button>
                   <button className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted dark:hover:bg-gray-700">
@@ -71,12 +82,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onDeleteTask }) => {
           </div>
         </div>
         
-        <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3">{task.description}</p>
+        <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3 break-words">{task.description}</p>
         
-        <div className="flex justify-between items-center text-xs text-muted-foreground dark:text-gray-400 mb-2">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs text-muted-foreground dark:text-gray-400 mb-2 gap-2">
           <span>Updated {format(task.updated, 'MMM d')}</span>
           {task.assignee && (
-            <span className="bg-muted dark:bg-gray-700 px-2 py-1 rounded">{task.assignee}</span>
+            <span className="bg-muted dark:bg-gray-700 px-2 py-1 rounded truncate max-w-full sm:max-w-[120px]">{task.assignee}</span>
           )}
         </div>
         
@@ -101,6 +112,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onDeleteTask }) => {
         taskId={task.id}
         taskTitle={task.title}
         onDeleteTask={onDeleteTask || (() => {})}
+      />
+
+      <EditTaskModal
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        task={task}
+        onEditTask={onEditTask || (() => {})}
       />
     </>
   );

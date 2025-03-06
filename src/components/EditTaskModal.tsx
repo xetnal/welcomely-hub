@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,14 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Priority, ProjectStage } from '@/lib/types';
+import { Priority, Task } from '@/lib/types';
 import { toast } from 'sonner';
 
-interface AddTaskModalProps {
+interface EditTaskModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  stage: ProjectStage;
-  onAddTask: (newTask: any) => void;
+  task: Task;
+  onEditTask: (taskId: string, updatedTask: Partial<Task>) => void;
 }
 
 // Mock employees data
@@ -27,17 +27,28 @@ const employees = [
   { id: '5', name: 'Michael Brown' },
 ];
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ 
+const EditTaskModal: React.FC<EditTaskModalProps> = ({ 
   open, 
   onOpenChange,
-  stage,
-  onAddTask
+  task,
+  onEditTask
 }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
-  const [assignee, setAssignee] = useState('unassigned');
-  const [isClientTask, setIsClientTask] = useState(true);
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description);
+  const [priority, setPriority] = useState<Priority>(task.priority);
+  const [assignee, setAssignee] = useState(task.assignee || 'unassigned');
+  const [isClientTask, setIsClientTask] = useState(task.isClientTask ?? true);
+
+  // Update form when task changes
+  useEffect(() => {
+    if (open) {
+      setTitle(task.title);
+      setDescription(task.description);
+      setPriority(task.priority);
+      setAssignee(task.assignee || 'unassigned');
+      setIsClientTask(task.isClientTask ?? true);
+    }
+  }, [open, task]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,39 +58,25 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
       return;
     }
 
-    const newTask = {
-      id: `t${Date.now()}`,
+    const updatedTask: Partial<Task> = {
       title,
       description,
-      stage,
-      status: 'Backlog' as const,
       priority,
       assignee: assignee !== 'unassigned' ? assignee : undefined,
-      comments: [],
-      created: new Date(),
-      updated: new Date(),
       isClientTask,
+      updated: new Date(),
     };
 
-    onAddTask(newTask);
-    resetForm();
+    onEditTask(task.id, updatedTask);
     onOpenChange(false);
-    toast.success('Task added successfully');
-  };
-
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setPriority('medium');
-    setAssignee('unassigned');
-    setIsClientTask(true);
+    toast.success('Task updated successfully');
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-background">
         <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle className="text-xl">Add New Task</DialogTitle>
+          <DialogTitle className="text-xl">Edit Task</DialogTitle>
           <Button 
             className="absolute right-4 top-4 p-1 h-auto rounded-full" 
             variant="ghost" 
@@ -101,7 +98,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                 {isClientTask ? 'Client Task' : 'Welcomely Task'}
               </Label>
             </div>
-            <div className="text-sm text-muted-foreground">Stage: {stage}</div>
+            <div className="text-sm text-muted-foreground">Stage: {task.stage}</div>
           </div>
           
           <div className="space-y-2">
@@ -178,7 +175,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
               Cancel
             </Button>
             <Button type="submit">
-              Add Task
+              Save Changes
             </Button>
           </DialogFooter>
         </form>
@@ -187,4 +184,4 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
   );
 };
 
-export default AddTaskModal;
+export default EditTaskModal;
