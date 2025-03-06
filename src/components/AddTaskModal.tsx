@@ -36,7 +36,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
-  const [assignee, setAssignee] = useState('');
+  const [assignee, setAssignee] = useState('unassigned');
   const [isClientTask, setIsClientTask] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,7 +54,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
       stage,
       status: 'Backlog' as const,
       priority,
-      assignee: assignee || undefined,
+      assignee: assignee !== 'unassigned' ? assignee : undefined,
       comments: [],
       created: new Date(),
       updated: new Date(),
@@ -71,7 +71,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
     setTitle('');
     setDescription('');
     setPriority('medium');
-    setAssignee('');
+    setAssignee('unassigned');
     setIsClientTask(true);
   };
 
@@ -155,7 +155,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {employees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.name}>
                       <div className="flex items-center gap-2">
