@@ -16,7 +16,8 @@ const Navbar = () => {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
     } else {
-      // Ensure we remove dark class if it was previously set
+      // Default to light mode
+      setIsDarkMode(false);
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
