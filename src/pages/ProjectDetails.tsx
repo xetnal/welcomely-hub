@@ -9,6 +9,7 @@ import { Project, ProjectStage, Task } from '@/lib/types';
 import StageColumn from '@/components/StageColumn';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Mock data for a single project
 const mockProject: Project = {
@@ -160,6 +161,7 @@ const ProjectDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeStage, setActiveStage] = useState<ProjectStage>('Development');
 
   useEffect(() => {
     // In a real app, we would fetch the project data from an API
@@ -265,7 +267,7 @@ const ProjectDetails = () => {
           </div>
         </div>
         
-        <div className="flex-1 overflow-x-auto pb-6">
+        <div className="flex-1 overflow-auto pb-6">
           <div className="container">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-medium">Project Stages</h2>
@@ -275,16 +277,27 @@ const ProjectDetails = () => {
               </Button>
             </div>
             
-            <div className="flex gap-6 min-h-[70vh] pb-4">
-              {stages.map((stage, index) => (
-                <StageColumn
-                  key={stage}
-                  stage={stage}
-                  tasks={getTasksByStage(stage)}
-                  index={index}
-                />
+            <Tabs defaultValue={activeStage} onValueChange={(value) => setActiveStage(value as ProjectStage)} className="w-full">
+              <TabsList className="grid grid-cols-7 mb-8">
+                {stages.map((stage) => (
+                  <TabsTrigger key={stage} value={stage} className="text-center">
+                    {stage}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              
+              {stages.map((stage) => (
+                <TabsContent key={stage} value={stage} className="mt-0 border-0 p-0">
+                  <div className="flex gap-6 min-h-[70vh]">
+                    <StageColumn
+                      stage={stage}
+                      tasks={getTasksByStage(stage)}
+                      index={0}
+                    />
+                  </div>
+                </TabsContent>
               ))}
-            </div>
+            </Tabs>
           </div>
         </div>
       </PageTransition>
