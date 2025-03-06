@@ -55,7 +55,7 @@
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 210 100% 65%;
     --primary-foreground: 224 71.4% 4.1%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -90,7 +90,7 @@
 @layer components {
   /* Glass effect */
   .glass {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm dark:bg-gray-800/80 dark:border-gray-700;
   }
   
   /* Card hover effect */
@@ -125,10 +125,10 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted rounded-full;
+    @apply bg-muted rounded-full dark:bg-gray-700;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/30;
+    @apply bg-muted-foreground/30 dark:bg-gray-600;
   }
 }

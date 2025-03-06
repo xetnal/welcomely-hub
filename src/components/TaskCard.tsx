@@ -34,7 +34,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
         delay: index * 0.05,
         ease: [0.22, 1, 0.36, 1]
       }}
-      className={`bg-white rounded-lg border shadow-sm p-4 mb-3 ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 shadow-sm p-4 mb-3 ${isDragging ? 'opacity-50' : ''}`}
       ref={drag}
     >
       <div className="flex justify-between items-start mb-2">
@@ -43,19 +43,19 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
           <PriorityBadge priority={task.priority} />
           <Popover>
             <PopoverTrigger asChild>
-              <button className="p-1 rounded-full hover:bg-muted text-muted-foreground">
+              <button className="p-1 rounded-full hover:bg-muted dark:hover:bg-gray-700 text-muted-foreground dark:text-gray-400">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-48">
+            <PopoverContent className="w-48 dark:bg-gray-800 dark:border-gray-700">
               <div className="space-y-1">
-                <button className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted">
+                <button className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted dark:hover:bg-gray-700">
                   Edit Task
                 </button>
-                <button className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted">
+                <button className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted dark:hover:bg-gray-700">
                   Move to Another Stage
                 </button>
-                <button className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted text-red-500">
+                <button className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted dark:hover:bg-gray-700 text-red-500">
                   Delete Task
                 </button>
               </div>
@@ -64,25 +64,25 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
         </div>
       </div>
       
-      <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
+      <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3">{task.description}</p>
       
-      <div className="flex justify-between items-center text-xs text-muted-foreground mb-2">
+      <div className="flex justify-between items-center text-xs text-muted-foreground dark:text-gray-400 mb-2">
         <span>Updated {format(task.updated, 'MMM d')}</span>
         {task.assignee && (
-          <span className="bg-muted px-2 py-1 rounded">{task.assignee}</span>
+          <span className="bg-muted dark:bg-gray-700 px-2 py-1 rounded">{task.assignee}</span>
         )}
       </div>
       
       <button
         onClick={() => setShowComments(!showComments)}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+        className="flex items-center gap-1 text-xs text-muted-foreground dark:text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors"
       >
         <MessageCircle className="h-3 w-3" />
         <span>{task.comments.length} comments</span>
       </button>
       
       {showComments && (
-        <div className="mt-3 pt-3 border-t">
+        <div className="mt-3 pt-3 border-t dark:border-gray-700">
           <CommentSection task={task} />
         </div>
       )}

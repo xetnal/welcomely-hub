@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, Check, Pencil, Plus, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, Pencil, Plus, User, List, Layout } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
@@ -12,8 +11,8 @@ import StageColumn from '@/components/StageColumn';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import TaskListView from '@/components/TaskListView';
 
-// Mock data for a single project with string replacements to fix apostrophe issues
 const mockProject: Project = {
   id: '1',
   name: 'Website Redesign',
@@ -173,10 +172,9 @@ const ProjectDetails = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeStage, setActiveStage] = useState<ProjectStage>('Development');
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   useEffect(() => {
-    // In a real app, we would fetch the project data from an API
-    // For now, we'll simulate a network request
     const timer = setTimeout(() => {
       setProject(mockProject);
       setLoading(false);
@@ -251,30 +249,38 @@ const ProjectDetails = () => {
     return project.tasks.filter(task => task.stage === stage && task.status === status);
   };
 
+  const getTasksByStage = (stage: ProjectStage) => {
+    return project.tasks.filter(task => task.stage === stage);
+  };
+
+  const toggleViewMode = () => {
+    setViewMode(viewMode === 'kanban' ? 'list' : 'kanban');
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
       <Navbar />
       
       <PageTransition className="flex-1 flex flex-col overflow-hidden">
         <div className="container py-6">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link to="/" className="p-2 rounded-full hover:bg-muted transition-colors">
+              <Link to="/" className="p-2 rounded-full hover:bg-muted transition-colors dark:hover:bg-gray-800">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
                 <h1 className="text-2xl font-bold">{project.name}</h1>
-                <p className="text-muted-foreground">Client: {project.client}</p>
+                <p className="text-muted-foreground dark:text-gray-400">Client: {project.client}</p>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400">
                 <User className="h-4 w-4" />
                 <span>{project.developer}</span>
               </div>
               
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400">
                 <Calendar className="h-4 w-4" />
                 <span>
                   {format(project.startDate, 'MMM d')} - {format(project.endDate, 'MMM d, yyyy')}
@@ -296,9 +302,9 @@ const ProjectDetails = () => {
           </div>
           
           <div className="mb-6">
-            <div className="glass p-4 rounded-lg">
+            <div className="glass p-4 rounded-lg dark:bg-gray-800 dark:border-gray-700">
               <h2 className="text-sm font-medium mb-2">Description</h2>
-              <p className="text-sm text-muted-foreground">{project.description}</p>
+              <p className="text-sm text-muted-foreground dark:text-gray-400">{project.description}</p>
             </div>
           </div>
         </div>
@@ -307,16 +313,36 @@ const ProjectDetails = () => {
           <div className="container">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-medium">Project Stages</h2>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                <Plus className="h-4 w-4" />
-                <span>Add Task</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1"
+                  onClick={toggleViewMode}
+                >
+                  {viewMode === 'kanban' ? (
+                    <>
+                      <List className="h-4 w-4" />
+                      <span>List View</span>
+                    </>
+                  ) : (
+                    <>
+                      <Layout className="h-4 w-4" />
+                      <span>Kanban View</span>
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Plus className="h-4 w-4" />
+                  <span>Add Task</span>
+                </Button>
+              </div>
             </div>
             
             <Tabs defaultValue={activeStage} onValueChange={(value) => setActiveStage(value as ProjectStage)} className="w-full">
-              <TabsList className="grid grid-cols-7 mb-8">
+              <TabsList className="grid grid-cols-7 mb-8 dark:bg-gray-800">
                 {stages.map((stage) => (
-                  <TabsTrigger key={stage} value={stage} className="text-center">
+                  <TabsTrigger key={stage} value={stage} className="text-center dark:data-[state=active]:bg-gray-700 dark:text-gray-200 dark:data-[state=active]:text-white">
                     {stage}
                   </TabsTrigger>
                 ))}
@@ -324,20 +350,24 @@ const ProjectDetails = () => {
               
               {stages.map((stage) => (
                 <TabsContent key={stage} value={stage} className="mt-0 border-0 p-0">
-                  <DndProvider backend={HTML5Backend}>
-                    <div className="grid grid-cols-5 gap-4 min-h-[70vh] overflow-x-auto">
-                      {statuses.map((status, statusIndex) => (
-                        <StageColumn
-                          key={`${stage}-${status}`}
-                          stage={stage}
-                          status={status}
-                          tasks={getTasksByStageAndStatus(stage, status)}
-                          index={statusIndex}
-                          onDropTask={moveTask}
-                        />
-                      ))}
-                    </div>
-                  </DndProvider>
+                  {viewMode === 'kanban' ? (
+                    <DndProvider backend={HTML5Backend} key={`dnd-${stage}`}>
+                      <div className="grid grid-cols-5 gap-4 min-h-[70vh]">
+                        {statuses.map((status, statusIndex) => (
+                          <StageColumn
+                            key={`${stage}-${status}`}
+                            stage={stage}
+                            status={status}
+                            tasks={getTasksByStageAndStatus(stage, status)}
+                            index={statusIndex}
+                            onDropTask={moveTask}
+                          />
+                        ))}
+                      </div>
+                    </DndProvider>
+                  ) : (
+                    <TaskListView tasks={getTasksByStage(stage)} />
+                  )}
                 </TabsContent>
               ))}
             </Tabs>
