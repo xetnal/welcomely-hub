@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Check, Pencil, Plus, User, List, Layout } from 'lucide-react';
 import { format } from 'date-fns';
@@ -13,7 +14,9 @@ import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TaskListView from '@/components/TaskListView';
 import AddTaskModal from '@/components/AddTaskModal';
-import { Toaster } from 'sonner';
+import StageProgressBar from '@/components/StageProgressBar';
+import StageCompletionButton from '@/components/StageCompletionButton';
+import { Toaster, toast } from 'sonner';
 
 const mockProject: Project = {
   id: '1',
@@ -24,6 +27,7 @@ const mockProject: Project = {
   endDate: new Date(2023, 9, 30),
   status: 'active',
   description: 'Complete website redesign with new branding, improved UX, and mobile-first approach.',
+  completedStages: [], // Initially, no stages are completed
   tasks: [
     {
       id: 't1',
@@ -268,6 +272,79 @@ const ProjectDetails = () => {
     });
   }, [project]);
 
+  // Calculate completion percentage for the current stage
+  const stageCompletionPercentage = useMemo(() => {
+    if (!project) return 0;
+    
+    const stageTasks = project.tasks.filter(task => task.stage === activeStage);
+    if (stageTasks.length === 0) return 0;
+    
+    const completedTasks = stageTasks.filter(task => task.status === 'Completed');
+    return Math.round((completedTasks.length / stageTasks.length) * 100);
+  }, [project, activeStage]);
+
+  // Toggle stage completion status
+  const toggleStageCompletion = useCallback((stage: ProjectStage) => {
+    if (!project) return;
+
+    setProject(prevProject => {
+      if (!prevProject) return prevProject;
+
+      const completedStages = prevProject.completedStages || [];
+      
+      if (completedStages.includes(stage)) {
+        // Remove stage from completed stages
+        return {
+          ...prevProject,
+          completedStages: completedStages.filter(s => s !== stage)
+        };
+      } else {
+        // Add stage to completed stages
+        const newCompletedStages = [...completedStages, stage];
+        
+        // Sort completed stages to match the order in the stages array
+        newCompletedStages.sort((a, b) => {
+          return stages.indexOf(a) - stages.indexOf(b);
+        });
+        
+        toast.success(`${stage} stage marked as complete`);
+        return {
+          ...prevProject,
+          completedStages: newCompletedStages
+        };
+      }
+    });
+  }, [project, stages]);
+
+  // Check if a stage has pending tasks while being marked as completed
+  const stageHasWarning = useCallback((stage: ProjectStage) => {
+    if (!project || !project.completedStages?.includes(stage)) return false;
+    
+    const stageTasks = project.tasks.filter(task => task.stage === stage);
+    return stageTasks.some(task => task.status !== 'Completed');
+  }, [project]);
+
+  // Check if there are pending tasks in any completed stage
+  const hasWarningsInPreviousStages = useCallback((currentStage: ProjectStage) => {
+    if (!project || !project.completedStages) return false;
+    
+    // Get all stages before the current one that are marked as completed
+    const previousCompletedStages = project.completedStages.filter(
+      stage => stages.indexOf(stage) < stages.indexOf(currentStage)
+    );
+    
+    // Check if any of those stages have non-completed tasks
+    return previousCompletedStages.some(stage => {
+      const stageTasks = project.tasks.filter(task => task.stage === stage);
+      return stageTasks.some(task => task.status !== 'Completed');
+    });
+  }, [project, stages]);
+
+  // Check if a stage is completed
+  const isStageCompleted = useCallback((stage: ProjectStage) => {
+    return project?.completedStages?.includes(stage) || false;
+  }, [project]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -397,18 +474,64 @@ const ProjectDetails = () => {
               </div>
               
               <Tabs defaultValue={activeStage} onValueChange={(value) => setActiveStage(value as ProjectStage)} className="w-full">
-                <TabsList className="grid grid-cols-7 mb-8 dark:bg-gray-800">
+                <TabsList className="grid grid-cols-7 mb-4 dark:bg-gray-800">
                   {stages.map((stage) => (
-                    <TabsTrigger key={stage} value={stage} className="text-center dark:data-[state=active]:bg-gray-700 dark:text-gray-200 dark:data-[state=active]:text-white">
+                    <TabsTrigger 
+                      key={stage} 
+                      value={stage} 
+                      className={`relative text-center dark:data-[state=active]:bg-gray-700 dark:text-gray-200 dark:data-[state=active]:text-white ${
+                        hasWarningsInPreviousStages(stage) && stage === activeStage
+                          ? 'animate-pulse'
+                          : ''
+                      }`}
+                    >
                       {stage}
+                      {hasWarningsInPreviousStages(stage) && stage === activeStage && (
+                        <span className="absolute -top-1 -right-1">
+                          <span className="flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                          </span>
+                        </span>
+                      )}
                     </TabsTrigger>
                   ))}
                 </TabsList>
                 
+                <div className="mb-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 mr-4">
+                      <StageProgressBar percentage={stageCompletionPercentage} />
+                    </div>
+                    <StageCompletionButton 
+                      stage={activeStage}
+                      isCompleted={isStageCompleted(activeStage)}
+                      hasWarning={stageHasWarning(activeStage)}
+                      onToggleCompletion={toggleStageCompletion}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {stages.map((stage, index) => (
+                      <div 
+                        key={stage}
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          isStageCompleted(stage) 
+                            ? stageHasWarning(stage)
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                              : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-muted text-muted-foreground dark:bg-gray-800 dark:text-gray-400'
+                        }`}
+                      >
+                        {stage}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
                 {stages.map((stage) => (
                   <TabsContent key={stage} value={stage} className="mt-0 border-0 p-0">
                     {viewMode === 'kanban' ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 min-h-[70vh]">
+                      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 min-h-[60vh]">
                         {statuses.map((status, statusIndex) => (
                           <StageColumn
                             key={`${stage}-${status}`}
@@ -420,6 +543,7 @@ const ProjectDetails = () => {
                             onAddTask={addTask}
                             onDeleteTask={deleteTask}
                             onEditTask={editTask}
+                            isStageCompleted={isStageCompleted(stage)}
                           />
                         ))}
                       </div>

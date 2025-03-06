@@ -16,6 +16,7 @@ interface StageColumnProps {
   onAddTask?: (newTask: any) => void;
   onDeleteTask?: (taskId: string) => void;
   onEditTask?: (taskId: string, updatedTask: Partial<Task>) => void;
+  isStageCompleted?: boolean;
 }
 
 const StatusIcons: Record<TaskStatus, string> = {
@@ -34,7 +35,8 @@ const StageColumn: React.FC<StageColumnProps> = ({
   onDropTask,
   onAddTask,
   onDeleteTask,
-  onEditTask
+  onEditTask,
+  isStageCompleted
 }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
@@ -59,7 +61,9 @@ const StageColumn: React.FC<StageColumnProps> = ({
           delay: index * 0.1,
           ease: [0.22, 1, 0.36, 1]
         }}
-        className={`flex-shrink-0 glass rounded-xl flex flex-col h-full ${isOver ? 'bg-muted/50 dark:bg-gray-700/50' : ''} dark:bg-gray-800 dark:border-gray-700`}
+        className={`flex-shrink-0 glass rounded-xl flex flex-col h-full ${isOver ? 'bg-muted/50 dark:bg-gray-700/50' : ''} ${
+          isStageCompleted ? 'border-2 border-green-500 dark:border-green-400' : 'dark:border-gray-700'
+        } dark:bg-gray-800`}
         ref={drop}
       >
         <div className="p-3 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm z-10 border-b dark:border-gray-700">

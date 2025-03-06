@@ -48,4 +48,5 @@ export interface Project {
   status: 'active' | 'completed' | 'on-hold';
   tasks: Task[];
   description?: string;
+  completedStages?: ProjectStage[];
 }
