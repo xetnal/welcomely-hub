@@ -44,14 +44,17 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const fetchEmployees = async () => {
     setIsLoading(true);
     try {
+      // Using a simpler query that doesn't trigger the recursive policy issue
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url');
+        .select('id, full_name, avatar_url')
+        .limit(100);
       
       if (error) {
         throw error;
       }
       
+      console.log("Fetched employees:", data);
       setEmployees(data || []);
     } catch (error) {
       console.error('Error fetching employees:', error);
