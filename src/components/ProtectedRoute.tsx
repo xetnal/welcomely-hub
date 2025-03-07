@@ -18,6 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        console.log("Protected route: Checking session...");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -26,6 +27,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           setSessionUser(null);
         } else {
           setSessionUser(data.session?.user || null);
+          if (data.session?.user) {
+            console.log("Protected route: Session user found:", data.session.user.email);
+          } else {
+            console.log("Protected route: No session user found");
+          }
         }
       } catch (err) {
         console.error("Error checking session:", err);
@@ -38,12 +44,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     if (loading) {
       checkSession();
     } else {
+      console.log("Protected route: Already checked auth context, user:", user?.email);
       setIsCheckingSession(false);
     }
-  }, [loading]);
+  }, [loading, user]);
 
   // If we're loading or checking session, show loading spinner
   if (loading || isCheckingSession) {
+    console.log("Protected route: Loading state, showing spinner");
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
@@ -56,6 +64,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // If there was an error checking the session
   if (checkError) {
+    console.error("Protected route: Session check error:", checkError);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="bg-destructive/15 text-destructive p-6 rounded-lg max-w-md">
@@ -74,11 +83,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // If user is not authenticated, redirect to auth page with the intended location
   if (!user && !sessionUser) {
-    console.log("No authenticated user found, redirecting to /auth");
+    console.log("Protected route: No authenticated user found, redirecting to /auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // User is authenticated, render the protected content
+  console.log("Protected route: Authentication confirmed, rendering content");
   return <>{children}</>;
 };
 

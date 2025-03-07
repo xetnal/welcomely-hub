@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,8 +22,24 @@ const Auth = () => {
   // Get the path the user was trying to access before being redirected to auth
   const from = location.state?.from?.pathname || '/';
 
-  // Redirect if user is already authenticated
+  useEffect(() => {
+    // If loading completes and user is found, redirect
+    if (!authLoading && user) {
+      console.log("Auth.tsx: User is authenticated, redirecting to", from);
+      navigate(from, { replace: true });
+    }
+  }, [user, authLoading, navigate, from]);
+
+  // Clear loading state if auth loading changes
+  useEffect(() => {
+    if (!authLoading) {
+      setIsLoading(false);
+    }
+  }, [authLoading]);
+
+  // If user is already authenticated and not loading, redirect
   if (user && !authLoading) {
+    console.log("Auth.tsx: Redirecting authenticated user to", from);
     return <Navigate to={from} replace />;
   }
 
@@ -35,7 +50,7 @@ const Auth = () => {
     
     try {
       await signIn(email, password);
-      // Navigation will happen automatically via the condition above
+      // Navigation will happen automatically via the effect above
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
       toast({
@@ -44,8 +59,7 @@ const Auth = () => {
         variant: "destructive",
       });
       console.error("Sign in error:", err);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Make sure to reset loading state on error
     }
   };
 
@@ -60,6 +74,7 @@ const Auth = () => {
         title: "Account created",
         description: "Please check your email for confirmation",
       });
+      setIsLoading(false); // Reset loading state after successful signup
     } catch (err: any) {
       setError(err.message || 'Failed to sign up');
       toast({
@@ -68,8 +83,7 @@ const Auth = () => {
         variant: "destructive",
       });
       console.error("Sign up error:", err);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset loading state on error
     }
   };
 
