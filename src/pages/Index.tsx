@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Search, Plus, Filter } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
@@ -9,85 +9,100 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import AddProjectModal from '@/components/AddProjectModal';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
-const mockProjects: Project[] = [
-  {
-    id: '1',
-    name: 'Website Redesign',
-    client: 'Acme Corporation',
-    developer: 'Jane Smith',
-    startDate: new Date(2023, 7, 15),
-    endDate: new Date(2023, 9, 30),
-    status: 'active',
-    description: 'Complete website redesign with new branding, improved UX, and mobile-first approach.',
-    tasks: []
-  },
-  {
-    id: '2',
-    name: 'Mobile App Development',
-    client: 'Global Tech',
-    developer: 'John Doe',
-    startDate: new Date(2023, 6, 1),
-    endDate: new Date(2023, 11, 15),
-    status: 'active',
-    description: 'Cross-platform mobile app for iOS and Android with customer portal integration.',
-    tasks: []
-  },
-  {
-    id: '3',
-    name: 'E-commerce Platform',
-    client: 'Fashion Boutique',
-    developer: 'Alex Johnson',
-    startDate: new Date(2023, 5, 10),
-    endDate: new Date(2023, 8, 20),
-    status: 'on-hold',
-    description: 'Custom e-commerce solution with inventory management and payment gateway integration.',
-    tasks: []
-  },
-  {
-    id: '4',
-    name: 'CRM Integration',
-    client: 'Sales Pro',
-    developer: 'Emily Chen',
-    startDate: new Date(2023, 8, 5),
-    endDate: new Date(2024, 1, 15),
-    status: 'active',
-    description: 'Integration of the existing CRM system with new marketing automation tools.',
-    tasks: []
-  },
-  {
-    id: '5',
-    name: 'Business Analytics Dashboard',
-    client: 'Data Insights Inc.',
-    developer: 'Michael Brown',
-    startDate: new Date(2023, 4, 20),
-    endDate: new Date(2023, 7, 10),
-    status: 'completed',
-    description: 'Interactive dashboard for business analytics with real-time data visualization.',
-    tasks: []
-  },
-  {
-    id: '6',
-    name: 'Cloud Migration',
-    client: 'Legacy Systems Co.',
-    developer: 'Sarah Williams',
-    startDate: new Date(2023, 9, 1),
-    endDate: new Date(2024, 2, 28),
-    status: 'active',
-    description: 'Migration of legacy systems to cloud infrastructure with minimal downtime.',
-    tasks: []
+const fetchProjects = async (userId: string | undefined) => {
+  if (!userId) return [];
+  
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    throw new Error(error.message);
   }
-];
+  
+  // Transform database projects into the expected Project format
+  return data.map(project => ({
+    ...project,
+    id: project.id,
+    name: project.name,
+    client: project.client,
+    developer: project.developer,
+    manager: project.manager,
+    startDate: new Date(project.start_date),
+    endDate: new Date(project.end_date),
+    status: project.status,
+    description: project.description || '',
+    tasks: []
+  })) as Project[];
+};
 
 const Index = () => {
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { toast } = useToast();
+  const { user } = useAuth();
+  
+  const { data: projects = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['projects', user?.id],
+    queryFn: () => fetchProjects(user?.id),
+    enabled: !!user?.id
+  });
 
-  const handleAddProject = (newProject: Project) => {
-    // Add the new project to the beginning of the projects array
-    setProjects((prevProjects) => [newProject, ...prevProjects]);
-    console.log("New project created:", newProject); // Add logging for debugging
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load projects. Please try again later.",
+        variant: "destructive",
+      });
+      console.error("Error fetching projects:", error);
+    }
+  }, [error, toast]);
+
+  const handleAddProject = async (newProject: Project) => {
+    try {
+      // Format the project for Supabase
+      const projectForSupabase = {
+        id: newProject.id,
+        name: newProject.name,
+        client: newProject.client,
+        developer: newProject.developer,
+        manager: newProject.manager,
+        start_date: newProject.startDate,
+        end_date: newProject.endDate,
+        status: newProject.status,
+        description: newProject.description,
+        user_id: user?.id
+      };
+      
+      const { error } = await supabase
+        .from('projects')
+        .insert(projectForSupabase);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Project created successfully!",
+      });
+      
+      // Refetch projects after adding
+      refetch();
+      
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err?.message || "Failed to create project",
+        variant: "destructive",
+      });
+      console.error("Error creating project:", err);
+    }
   };
 
   const filteredProjects = projects.filter(project => 
@@ -147,11 +162,33 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project, index) => (
-            <ProjectCard key={project.id} project={project} index={index} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div 
+                key={i} 
+                className="rounded-xl h-48 animate-pulse bg-gray-200 dark:bg-gray-800"
+              />
+            ))}
+          </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">No projects found</p>
+            <Button
+              onClick={() => setIsAddProjectModalOpen(true)}
+              className="flex items-center gap-1 mx-auto"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create your first project</span>
+            </Button>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredProjects.map((project, index) => (
+              <ProjectCard key={project.id} project={project} index={index} />
+            ))}
+          </div>
+        )}
       </PageTransition>
 
       <AddProjectModal
