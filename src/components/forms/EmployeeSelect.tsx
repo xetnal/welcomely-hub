@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { fetchEmployees, Employee } from '@/services/employeeService';
+import { useToast } from '@/hooks/use-toast';
 import FormField from './FormField';
 
 interface EmployeeSelectProps {
@@ -25,6 +26,7 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadEmployees = async () => {
@@ -32,17 +34,26 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
         setIsLoading(true);
         setError(null);
         const employeeData = await fetchEmployees();
-        setEmployees(employeeData);
+        // Make sure we have unique employees by ID
+        const uniqueEmployees = Array.from(
+          new Map(employeeData.map(employee => [employee.id, employee])).values()
+        );
+        setEmployees(uniqueEmployees);
       } catch (err) {
         console.error("Error loading employees:", err);
         setError("Failed to load employees");
+        toast({
+          title: "Error",
+          description: "Could not load employee list. Please refresh and try again.",
+          variant: "destructive",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     loadEmployees();
-  }, []);
+  }, [toast]);
 
   return (
     <FormField id={id} label={label}>

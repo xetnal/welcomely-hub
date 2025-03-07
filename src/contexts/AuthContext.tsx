@@ -29,6 +29,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for active session on mount
     const checkSession = async () => {
       try {
+        console.info("Checking session...");
+        setLoading(true);
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Error getting session:", error);
@@ -41,8 +43,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // If user exists, ensure they have an employee record
         if (session?.user) {
+          console.info("Auth state changed: SIGNED_IN", session.user.email);
           const fullName = session.user.user_metadata.full_name || 'Unknown User';
-          await createEmployeeFromUser(session.user.id, fullName);
+          try {
+            await createEmployeeFromUser(session.user.id, fullName);
+          } catch (err) {
+            console.error("Error creating employee record:", err);
+          }
         }
       } catch (err) {
         console.error("Session check error:", err);
@@ -56,14 +63,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        console.log("Auth state changed:", _event, session?.user?.email);
+        console.info("Auth state changed:", _event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         // If user exists, ensure they have an employee record
         if (session?.user) {
           const fullName = session.user.user_metadata.full_name || 'Unknown User';
-          await createEmployeeFromUser(session.user.id, fullName);
+          try {
+            await createEmployeeFromUser(session.user.id, fullName);
+          } catch (err) {
+            console.error("Error creating employee record:", err);
+          }
         }
         
         setLoading(false);
