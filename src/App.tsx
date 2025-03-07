@@ -8,6 +8,9 @@ import { AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
 import ProjectDetails from "./pages/ProjectDetails";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -17,13 +20,30 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AnimatePresence mode="wait">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/project/:id" element={<ProjectDetails />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AnimatePresence>
+        <AuthProvider>
+          <AnimatePresence mode="wait">
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route 
+                path="/" 
+                element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/project/:id" 
+                element={
+                  <ProtectedRoute>
+                    <ProjectDetails />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AnimatePresence>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

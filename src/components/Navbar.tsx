@@ -1,12 +1,23 @@
 
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, LogOut, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { user, profile, signOut } = useAuth();
 
   useEffect(() => {
     // Check for saved theme preference
@@ -33,6 +44,24 @@ const Navbar = () => {
       localStorage.setItem('theme', 'dark');
     }
     setIsDarkMode(!isDarkMode);
+  };
+
+  // Get initials for avatar fallback
+  const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    }
+    
+    if (user?.email) {
+      return user.email.substring(0, 2).toUpperCase();
+    }
+    
+    return 'U';
   };
 
   return (
@@ -64,17 +93,19 @@ const Navbar = () => {
             </motion.span>
           </Link>
           
-          <nav className="hidden md:flex gap-6">
-            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary dark:text-gray-200">
-              Dashboard
-            </Link>
-            <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400">
-              Reports
-            </a>
-            <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400">
-              Analytics
-            </a>
-          </nav>
+          {user && (
+            <nav className="hidden md:flex gap-6">
+              <Link to="/" className="text-sm font-medium transition-colors hover:text-primary dark:text-gray-200">
+                Dashboard
+              </Link>
+              <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400">
+                Reports
+              </a>
+              <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400">
+                Analytics
+              </a>
+            </nav>
+          )}
         </div>
         
         <div className="flex items-center gap-4">
@@ -88,14 +119,44 @@ const Navbar = () => {
             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
           
-          <div className="hidden md:flex items-center gap-4">
-            <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400">
-              Settings
-            </a>
-            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center dark:bg-primary/30 text-primary-foreground">
-              <span className="text-xs font-medium">JD</span>
+          {user ? (
+            <div className="flex items-center gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || user.email} />
+                      <AvatarFallback>{getInitials()}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{profile?.full_name || 'User'}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          </div>
+          ) : (
+            <Button asChild variant="default" size="sm">
+              <Link to="/auth">Login</Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>
