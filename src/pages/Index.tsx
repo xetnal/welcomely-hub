@@ -91,22 +91,27 @@ const Index = () => {
       }
 
       console.log("Submitting project to database:", newProject);
+      console.log("User ID being used:", user.id);
 
       // Transform Project to database format
+      const projectData = {
+        name: newProject.name,
+        client: newProject.client,
+        developer: newProject.developer,
+        manager: newProject.manager,
+        description: newProject.description || `Project for ${newProject.client}`,
+        start_date: newProject.startDate.toISOString(),
+        end_date: newProject.endDate.toISOString(),
+        status: newProject.status,
+        user_id: user.id,
+        completed_stages: []
+      };
+      
+      console.log("Data being sent to Supabase:", projectData);
+
       const { data, error } = await supabase
         .from('projects')
-        .insert({
-          name: newProject.name,
-          client: newProject.client,
-          developer: newProject.developer,
-          manager: newProject.manager,
-          description: newProject.description || `Project for ${newProject.client}`,
-          start_date: newProject.startDate.toISOString(),
-          end_date: newProject.endDate.toISOString(),
-          status: newProject.status,
-          user_id: user.id,
-          completed_stages: []
-        })
+        .insert(projectData)
         .select()
         .single();
 
@@ -135,6 +140,9 @@ const Index = () => {
       
       setProjects(prevProjects => [addedProject, ...prevProjects]);
       toast.success('Project created successfully');
+      
+      // Refresh projects from database to ensure we have the latest data
+      fetchProjects();
     } catch (error: any) {
       toast.error(`Error creating project: ${error.message}`);
       console.error('Error creating project:', error);
