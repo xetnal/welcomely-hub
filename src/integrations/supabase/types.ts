@@ -183,6 +183,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_authenticated_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       ping_db: {
         Args: Record<PropertyKey, never>
         Returns: string

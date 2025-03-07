@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -8,18 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Project } from '@/lib/types';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { fetchEmployees, Employee } from '@/services/employeeService';
 
 interface AddProjectModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddProject: (newProject: Project) => void;
-}
-
-interface Employee {
-  id: string;
-  full_name: string;
-  avatar_url?: string;
 }
 
 const AddProjectModal: React.FC<AddProjectModalProps> = ({ 
@@ -37,31 +30,15 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      fetchEmployees();
+      loadEmployees();
     }
   }, [open]);
 
-  const fetchEmployees = async () => {
+  const loadEmployees = async () => {
     setIsLoading(true);
-    try {
-      // Using a simpler query that doesn't trigger the recursive policy issue
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .limit(100);
-      
-      if (error) {
-        throw error;
-      }
-      
-      console.log("Fetched employees:", data);
-      setEmployees(data || []);
-    } catch (error) {
-      console.error('Error fetching employees:', error);
-      toast.error('Failed to load employees');
-    } finally {
-      setIsLoading(false);
-    }
+    const employeeData = await fetchEmployees();
+    setEmployees(employeeData);
+    setIsLoading(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -10,19 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Priority, Task } from '@/lib/types';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { fetchEmployees, Employee } from '@/services/employeeService';
 
 interface EditTaskModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task;
   onEditTask: (taskId: string, updatedTask: Partial<Task>) => void;
-}
-
-interface Employee {
-  id: string;
-  full_name: string;
-  avatar_url?: string;
 }
 
 const EditTaskModal: React.FC<EditTaskModalProps> = ({ 
@@ -47,30 +40,15 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       setPriority(task.priority);
       setAssignee(task.assignee || 'unassigned');
       setIsClientTask(task.isClientTask ?? true);
-      fetchEmployees();
+      loadEmployees();
     }
   }, [open, task]);
 
-  const fetchEmployees = async () => {
+  const loadEmployees = async () => {
     setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .limit(100);
-      
-      if (error) {
-        throw error;
-      }
-      
-      console.log("Fetched employees in EditTaskModal:", data);
-      setEmployees(data || []);
-    } catch (error) {
-      console.error('Error fetching employees:', error);
-      toast.error('Failed to load employees');
-    } finally {
-      setIsLoading(false);
-    }
+    const employeeData = await fetchEmployees();
+    setEmployees(employeeData);
+    setIsLoading(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
