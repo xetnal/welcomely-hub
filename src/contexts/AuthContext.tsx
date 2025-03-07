@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -134,37 +133,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Attempting to sign out");
       setLoading(true);
       
-      // First invalidate the session on the server side
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
-      
-      if (error) {
-        console.warn("Supabase sign out error:", error);
-        // Even with an error, we'll continue with local logout
-      }
-      
-      // Clear local state after server-side logout
+      // Clear local state first - this is the most important part
       setUser(null);
       setSession(null);
       
+      // Force a route change immediately
+      navigate('/auth', { replace: true });
+      
+      // Now attempt to sign out on the server (but we don't need to wait for it)
+      try {
+        // We don't await this, as we've already changed local state and navigation
+        supabase.auth.signOut().then(({ error }) => {
+          if (error) {
+            console.warn("Supabase sign out error:", error);
+          } else {
+            console.log("Server-side sign out successful");
+          }
+        });
+      } catch (serverError) {
+        console.warn("Error during server sign out:", serverError);
+        // We already navigated, so we don't need to do anything here
+      }
+      
       console.log("Sign out successful");
       toast.success("Signed out successfully");
-      
-      // Force navigation with timeout to ensure it happens after state updates
-      // Use a slightly longer timeout to ensure the auth state change event has fired
-      setTimeout(() => {
-        navigate('/auth', { replace: true });
-      }, 100);
       
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast.error(`Error signing out: ${error.message}`);
       
-      // Even on error, clear local state and try to navigate to auth page
-      setUser(null);
-      setSession(null);
-      setTimeout(() => {
-        navigate('/auth', { replace: true });
-      }, 100);
+      // Even on error, ensure we navigate to auth page
+      navigate('/auth', { replace: true });
     } finally {
       setLoading(false);
     }

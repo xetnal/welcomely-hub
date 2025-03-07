@@ -44,15 +44,17 @@ const Navbar = () => {
   };
 
   const handleSignOut = async () => {
-    if (isSigningOut) return; // Prevent multiple clicks
+    if (isSigningOut || loading) return; // Prevent multiple clicks
     
     try {
       setIsSigningOut(true);
       await signOut();
-      // The redirect will be handled inside the signOut function
+      // The signOut function now handles the navigation
     } catch (error) {
       console.error("Error during sign out:", error);
-      setIsSigningOut(false); // Reset only on error
+    } finally {
+      // We don't reset isSigningOut here because we'll be navigating away
+      // and this component will unmount
     }
   };
 
@@ -85,44 +87,42 @@ const Navbar = () => {
             </motion.span>
           </Link>
           
-          <nav className="hidden md:flex gap-6">
-            {user && (
-              <>
-                <Link 
-                  to="/" 
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    isActive('/') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
-                  }`}
-                >
-                  Home
-                </Link>
-                <Link 
-                  to="/projects" 
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    isActive('/projects') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
-                  }`}
-                >
-                  Projects
-                </Link>
-                <Link 
-                  to="/reports" 
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    isActive('/reports') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
-                  }`}
-                >
-                  Reports
-                </Link>
-                <Link 
-                  to="/analytics" 
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    isActive('/analytics') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
-                  }`}
-                >
-                  Analytics
-                </Link>
-              </>
-            )}
-          </nav>
+          {user && (
+            <nav className="hidden md:flex gap-6">
+              <Link 
+                to="/" 
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive('/') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+                }`}
+              >
+                Home
+              </Link>
+              <Link 
+                to="/projects" 
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive('/projects') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+                }`}
+              >
+                Projects
+              </Link>
+              <Link 
+                to="/reports" 
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive('/reports') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+                }`}
+              >
+                Reports
+              </Link>
+              <Link 
+                to="/analytics" 
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive('/analytics') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+                }`}
+              >
+                Analytics
+              </Link>
+            </nav>
+          )}
         </div>
         
         <div className="flex items-center gap-4">
