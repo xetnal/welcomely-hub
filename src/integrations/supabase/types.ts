@@ -260,6 +260,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_role_by_id: {
+        Args: {
+          target_id: string
+        }
+        Returns: string
+      }
       get_user_role: {
         Args: {
           user_id: string
