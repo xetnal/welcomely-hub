@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -40,19 +39,16 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       toast.error('Please enter a client name');
       return;
     }
-
-    // Generate a unique ID using timestamp + random string
-    const uniqueId = `p-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     const newProject: Project = {
-      id: uniqueId,
+      id: crypto.randomUUID(), // Generate a proper UUID
       name,
       client,
       developer: developer === 'Unassigned' ? 'Unassigned' : developer,
-      manager: manager === 'Unassigned' ? undefined : manager, // Only include if not Unassigned
+      manager: manager === 'Unassigned' ? undefined : manager,
       startDate: new Date(),
-      endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)), // Default 3 months duration
-      status: status === 'inactive' ? 'on-hold' : status, // Map 'inactive' to 'on-hold' as per type definition
+      endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+      status: status === 'inactive' ? 'on-hold' : status,
       tasks: [],
       description: `Project for ${client}`
     };

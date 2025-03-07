@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Search, Plus, Filter } from 'lucide-react';
@@ -26,7 +25,6 @@ const fetchProjects = async (userId: string | undefined) => {
     throw new Error(error.message);
   }
   
-  // Transform database projects into the expected Project format
   return data.map(project => ({
     ...project,
     id: project.id,
@@ -67,9 +65,7 @@ const Index = () => {
 
   const handleAddProject = async (newProject: Project) => {
     try {
-      // Format the project for Supabase
       const projectForSupabase = {
-        id: newProject.id,
         name: newProject.name,
         client: newProject.client,
         developer: newProject.developer,
@@ -92,7 +88,6 @@ const Index = () => {
         description: "Project created successfully!",
       });
       
-      // Refetch projects after adding
       refetch();
       
     } catch (err: any) {
