@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,45 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Auth = () => {
-  const { user, signIn, signUp, signOut, loading } = useAuth();
+  const { user, signIn, signUp, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  
-  // Get the pathname to redirect to after login
-  const from = location.state?.from?.pathname || '/';
 
-  // Force sign out when accessing the auth page
-  useEffect(() => {
-    const forceSignOut = async () => {
-      try {
-        if (user) {
-          console.log('Auth page: Force signing out current user');
-          await signOut();
-        }
-      } catch (error) {
-        console.error('Error during force sign out:', error);
-      }
-    };
-    
-    forceSignOut();
-  }, []);
-
-  // Wait for authentication to complete before redirecting
-  useEffect(() => {
-    if (user && !loading) {
-      console.log('Auth: User authenticated, redirecting to', from);
-      navigate(from, { replace: true });
-    }
-  }, [user, loading, from, navigate]);
+  // Redirect if user is already authenticated
+  if (user && !loading) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log("Signing in user:", email);
     try {
       await signIn(email, password);
     } finally {
@@ -65,16 +40,6 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-
-  // Show loading state if we're transitioning after login
-  if (user && !loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
-        <p className="ml-3 text-primary">Redirecting...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="container flex items-center justify-center min-h-screen py-12">
@@ -132,7 +97,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </CardFooter>
@@ -184,7 +149,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Creating account..." : "Create account"}
                   </Button>
                 </CardFooter>

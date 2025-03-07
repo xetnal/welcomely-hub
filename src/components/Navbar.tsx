@@ -1,5 +1,5 @@
 
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sun, Moon, LogOut, LogIn } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -8,10 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut } = useAuth();
   const location = useLocation();
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Check for saved theme preference
@@ -29,13 +27,6 @@ const Navbar = () => {
     }
   }, []);
 
-  // Reset signing out state when user changes or when loading completes
-  useEffect(() => {
-    if (!user || !loading) {
-      setIsSigningOut(false);
-    }
-  }, [user, loading]);
-
   const toggleDarkMode = () => {
     if (isDarkMode) {
       document.documentElement.classList.remove('dark');
@@ -49,21 +40,6 @@ const Navbar = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path;
-  };
-
-  const handleSignOut = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log("Attempting to sign out");
-    setIsSigningOut(true);
-    try {
-      await signOut();
-      console.log("Sign out successful");
-      // Navigate after successful sign out
-      navigate('/auth');
-    } catch (error) {
-      console.error("Sign out error:", error);
-      setIsSigningOut(false);
-    }
   };
 
   return (
@@ -148,11 +124,10 @@ const Navbar = () => {
                 <Button 
                   variant="ghost" 
                   className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400"
-                  onClick={handleSignOut}
-                  disabled={isSigningOut}
+                  onClick={signOut}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  {isSigningOut ? "Signing out..." : "Sign Out"}
+                  Sign Out
                 </Button>
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center dark:bg-primary/30 text-primary-foreground">
                   <span className="text-xs font-medium">

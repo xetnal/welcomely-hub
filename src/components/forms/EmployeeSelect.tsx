@@ -4,7 +4,6 @@ import { User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { fetchEmployees, Employee } from '@/services/employeeService';
 import FormField from './FormField';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface EmployeeSelectProps {
   id: string;
@@ -25,40 +24,17 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
 }) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const { user } = useAuth();
 
   useEffect(() => {
     const loadEmployees = async () => {
       setIsLoading(true);
-      setLoadError(null);
-      try {
-        const employeeData = await fetchEmployees();
-        
-        // Filter out duplicates and prioritize the current user's profile
-        const uniqueEmployees = employeeData.reduce((acc: Employee[], current) => {
-          const x = acc.find(item => item.full_name === current.full_name);
-          if (!x) {
-            return acc.concat([current]);
-          } else {
-            if (current.user_id === user?.id) {
-              return acc.filter(item => item.full_name !== current.full_name).concat([current]);
-            }
-            return acc;
-          }
-        }, []);
-        
-        setEmployees(uniqueEmployees);
-      } catch (error) {
-        console.error('Error loading employees:', error);
-        setLoadError('Failed to load profiles');
-      } finally {
-        setIsLoading(false);
-      }
+      const employeeData = await fetchEmployees();
+      setEmployees(employeeData);
+      setIsLoading(false);
     };
 
     loadEmployees();
-  }, [user?.id]);
+  }, []);
 
   return (
     <FormField id={id} label={label}>
@@ -72,9 +48,7 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
         <SelectContent>
           <SelectItem value={defaultOption}>{defaultLabel}</SelectItem>
           {isLoading ? (
-            <SelectItem disabled value="loading">Loading profiles...</SelectItem>
-          ) : loadError ? (
-            <SelectItem disabled value="error">{loadError}</SelectItem>
+            <SelectItem disabled value="loading">Loading employees...</SelectItem>
           ) : (
             employees.map((employee) => (
               <SelectItem key={employee.id} value={employee.full_name}>
