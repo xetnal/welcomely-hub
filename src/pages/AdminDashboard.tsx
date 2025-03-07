@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Shield, Save, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -30,7 +29,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-// Define the user profile type
 interface UserProfile {
   id: string;
   full_name: string | null;
@@ -49,12 +47,10 @@ const AdminDashboard = () => {
   const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({});
   const [savingChanges, setSavingChanges] = useState(false);
 
-  // Fetch all users and their profiles
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        // Get current user's role using the get_user_role function
         const { data: currentUserRoleData, error: currentUserRoleError } = await supabase
           .rpc('get_user_role', { user_id: user?.id });
 
@@ -65,24 +61,17 @@ const AdminDashboard = () => {
         setCurrentUserRole(currentUserRoleData);
         console.log("Current user role:", currentUserRoleData);
 
-        // Only proceed to fetch all users if current user is Admin (case-insensitive check)
         if (currentUserRoleData?.toLowerCase() === 'admin') {
-          // Fetch profiles with user roles
           const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, full_name, avatar_url, role')
-            .order('full_name');
+            .rpc('get_all_profiles');
 
           if (profilesError) {
             throw profilesError;
           }
 
-          // We can't get emails from auth.users via the client
-          // so we'll just display the profiles without emails
           setUsers(profilesData);
           console.log("Fetched users:", profilesData.length);
         } else {
-          // Not an admin, show warning
           toast.error("You don't have admin privileges");
         }
       } catch (error: any) {
@@ -98,7 +87,6 @@ const AdminDashboard = () => {
     }
   }, [user]);
 
-  // Create a memoized isAdmin value for checking admin status
   const isAdmin = currentUserRole?.toLowerCase() === 'admin';
 
   const handleRoleChange = (userId: string, newRole: string) => {
@@ -113,27 +101,22 @@ const AdminDashboard = () => {
 
     setSavingChanges(true);
     try {
-      // Update each user's role in both profiles and user_roles tables
       const promises = Object.entries(pendingChanges).map(([userId, role]) => {
-        // Update the profile
         const profileUpdate = supabase
           .from('profiles')
           .update({ role })
           .eq('id', userId);
           
-        // The trigger will automatically update the user_roles table
         return profileUpdate;
       });
 
       const results = await Promise.all(promises);
       
-      // Check for errors
       const errors = results.filter(result => result.error);
       if (errors.length > 0) {
         throw new Error(`${errors.length} updates failed`);
       }
 
-      // Update local state
       setUsers(users.map((user) => {
         if (pendingChanges[user.id]) {
           return { ...user, role: pendingChanges[user.id] as any };
