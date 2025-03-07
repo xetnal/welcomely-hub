@@ -4,6 +4,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { createEmployee } from '@/services/employeeService';
 
 type AuthContextType = {
   user: User | null;
@@ -23,6 +24,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Helper function to create an employee for a user
+  const ensureEmployeeExists = async (userId: string, fullName: string) => {
+    try {
+      // Check if employee already exists for this user
+      const { data, error } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        throw error;
+      }
+
+      // If employee doesn't exist, create one
+      if (!data) {
+        await createEmployee(userId, fullName);
+      }
+    } catch (error) {
+      console.error('Error ensuring employee exists:', error);
+    }
+  };
+
   useEffect(() => {
     // Check for active session on mount
     const checkSession = async () => {
@@ -34,6 +58,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // If we have a user, ensure they have an employee record
+        if (session?.user) {
+          const fullName = session.user.user_metadata?.full_name || 'User';
+          await ensureEmployeeExists(session.user.id, fullName);
+        }
       } catch (error) {
         console.error("Unexpected error during session check:", error);
       } finally {
@@ -45,9 +75,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // If we have a user, ensure they have an employee record
+        if (session?.user) {
+          const fullName = session.user.user_metadata?.full_name || 'User';
+          await ensureEmployeeExists(session.user.id, fullName);
+        }
+        
         setLoading(false);
       }
     );
@@ -59,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      const { error } = await supabase.auth.signUp({ 
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
@@ -68,6 +105,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) throw error;
+      
+      // Create employee record for the new user if we have a user
+      if (data.user) {
+        await createEmployee(data.user.id, fullName);
+      }
+      
       toast({
         title: "Account created",
         description: "Please check your email for the confirmation link",

@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { fetchEmployees, Employee } from '@/services/employeeService';
 import FormField from './FormField';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EmployeeSelectProps {
   id: string;
@@ -24,17 +24,31 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
 }) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadEmployees = async () => {
       setIsLoading(true);
       const employeeData = await fetchEmployees();
-      setEmployees(employeeData);
+      
+      const uniqueEmployees = employeeData.reduce((acc: Employee[], current) => {
+        const x = acc.find(item => item.full_name === current.full_name);
+        if (!x) {
+          return acc.concat([current]);
+        } else {
+          if (current.user_id === user?.id) {
+            return acc.filter(item => item.full_name !== current.full_name).concat([current]);
+          }
+          return acc;
+        }
+      }, []);
+      
+      setEmployees(uniqueEmployees);
       setIsLoading(false);
     };
 
     loadEmployees();
-  }, []);
+  }, [user?.id]);
 
   return (
     <FormField id={id} label={label}>
