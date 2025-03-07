@@ -23,21 +23,42 @@ const Auth = () => {
   // Get the path the user was trying to access before being redirected to auth
   const from = location.state?.from?.pathname || '/';
 
+  // Check authentication status on mount and when user changes
   useEffect(() => {
-    // If user is found, redirect
-    if (user) {
-      console.log("Auth.tsx: User is authenticated, redirecting to", from);
-      navigate(from, { replace: true });
-    }
+    const checkAuthAndRedirect = async () => {
+      try {
+        console.log("Auth.tsx: Checking auth status, user:", user?.email || "none");
+        if (user) {
+          console.log("Auth.tsx: User is authenticated, redirecting to", from);
+          navigate(from, { replace: true });
+        }
+      } catch (err) {
+        console.error("Auth.tsx: Error checking auth status:", err);
+      }
+    };
+    
+    checkAuthAndRedirect();
   }, [user, navigate, from]);
 
-  // Handle loading state changes
+  // Reset loading state when auth context loading state changes
   useEffect(() => {
     if (!authLoading && isLoading) {
       console.log("Auth.tsx: Resetting loading state because authLoading is false");
       setIsLoading(false);
     }
-  }, [authLoading]);
+  }, [authLoading, isLoading]);
+
+  // Set a maximum timeout for the loading spinner
+  useEffect(() => {
+    if (isLoading) {
+      const maxLoadingTimer = setTimeout(() => {
+        console.log("Auth.tsx: Maximum loading time reached, forcing loading state to false");
+        setIsLoading(false);
+      }, 8000); // 8 seconds maximum loading time
+      
+      return () => clearTimeout(maxLoadingTimer);
+    }
+  }, [isLoading]);
 
   // If user is already authenticated and not loading, redirect
   if (user && !authLoading) {

@@ -9,13 +9,21 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading: authContextLoading } = useAuth();
   const location = useLocation();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [sessionUser, setSessionUser] = useState<any>(null);
   const [checkError, setCheckError] = useState<string | null>(null);
 
   useEffect(() => {
+    // If auth context already has a user, no need to check the session manually
+    if (user) {
+      console.log("ProtectedRoute: User found in AuthContext, skipping direct session check");
+      setIsCheckingSession(false);
+      return;
+    }
+
+    // Only do direct session check if AuthContext doesn't have a user yet
     const checkSession = async () => {
       try {
         console.log("ProtectedRoute: Checking session directly from supabase...");
@@ -42,18 +50,39 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       }
     };
 
-    if (loading) {
-      // Only perform direct check if AuthContext is still loading
+    // If auth context is still loading, wait for it
+    if (!authContextLoading) {
       checkSession();
-    } else {
-      console.log("ProtectedRoute: Using auth context, user:", user?.email || "none");
-      setIsCheckingSession(false);
     }
-  }, [loading, user]);
+  }, [authContextLoading, user]);
+
+  // If auth context loading status changes to false, we can also stop checking
+  useEffect(() => {
+    if (!authContextLoading && isCheckingSession) {
+      console.log("ProtectedRoute: Auth context finished loading, setting isCheckingSession=false");
+      // Add small delay to allow AuthContext to update user if needed
+      const timer = setTimeout(() => {
+        setIsCheckingSession(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [authContextLoading, isCheckingSession]);
+
+  // Set a maximum timeout for the loading spinner
+  useEffect(() => {
+    const maxLoadingTime = setTimeout(() => {
+      if (isCheckingSession) {
+        console.log("ProtectedRoute: Maximum loading time reached, forcing completion");
+        setIsCheckingSession(false);
+      }
+    }, 5000); // 5 seconds maximum loading time
+    
+    return () => clearTimeout(maxLoadingTime);
+  }, []);
 
   // If we're loading or checking session, show loading spinner
-  if (loading || isCheckingSession) {
-    console.log(`ProtectedRoute: Still loading (auth loading: ${loading}, checking session: ${isCheckingSession})`);
+  if (authContextLoading || isCheckingSession) {
+    console.log(`ProtectedRoute: Still loading (auth loading: ${authContextLoading}, checking session: ${isCheckingSession})`);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
