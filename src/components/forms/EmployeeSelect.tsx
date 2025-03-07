@@ -28,9 +28,18 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
   useEffect(() => {
     const loadEmployees = async () => {
       setIsLoading(true);
-      const employeeData = await fetchEmployees();
-      setEmployees(employeeData);
-      setIsLoading(false);
+      try {
+        const employeeData = await fetchEmployees();
+        // Filter out duplicate names if any
+        const uniqueEmployees = employeeData.filter((employee, index, self) => 
+          index === self.findIndex(e => e.full_name === employee.full_name)
+        );
+        setEmployees(uniqueEmployees);
+      } catch (error) {
+        console.error("Error loading employees:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadEmployees();
