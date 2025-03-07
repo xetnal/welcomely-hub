@@ -36,7 +36,7 @@ const Navbar = () => {
         try {
           setIsLoadingRole(true);
           
-          // Using the new get_user_role function to avoid recursion
+          // Using the get_user_role function to avoid recursion
           const { data, error } = await supabase
             .rpc('get_user_role', { user_id: user.id });
             

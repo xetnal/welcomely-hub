@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Shield, Save, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -54,7 +53,7 @@ const AdminDashboard = () => {
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        // Get current user's role using the new function
+        // Get current user's role using the get_user_role function
         const { data: currentUserRoleData, error: currentUserRoleError } = await supabase
           .rpc('get_user_role', { user_id: user?.id });
 
@@ -110,7 +109,7 @@ const AdminDashboard = () => {
 
     setSavingChanges(true);
     try {
-      // Update each user's role in both profiles and user_roles
+      // Update each user's role in both profiles
       const promises = Object.entries(pendingChanges).map(([userId, role]) => {
         // Update the profile
         const profileUpdate = supabase
@@ -118,7 +117,6 @@ const AdminDashboard = () => {
           .update({ role })
           .eq('id', userId);
           
-        // The user_roles table will be updated via trigger
         return profileUpdate;
       });
 
