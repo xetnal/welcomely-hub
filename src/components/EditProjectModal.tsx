@@ -68,16 +68,16 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
     };
 
     onEditProject(project.id, updatedProject);
-    onOpenChange(false);
+    closeModal();
   };
 
-  // Handle cancel action - ensure the modal closes properly
-  const handleCancel = () => {
+  // Clean close modal function to ensure proper cleanup
+  const closeModal = () => {
     onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={closeModal}>
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-background">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">Edit Project</DialogTitle>
@@ -137,7 +137,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
           <StatusSelect value={status} onChange={setStatus} />
           
           <FormActions 
-            onCancel={handleCancel} 
+            onCancel={closeModal} 
             submitLabel="Save Changes" 
           />
         </form>

@@ -71,22 +71,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
                 size="icon" 
                 variant="ghost" 
                 className="h-8 w-8 rounded-full hover:bg-black/10"
+                onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={handleDropdownClick}>
-              <DropdownMenuItem onClick={handleEditClick}>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={handleEditClick}
+                onSelect={(e) => e.preventDefault()}
+              >
                 Edit Project
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                <Link 
-                  to={`/project/${project.id}`} 
-                  className="w-full block"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  View Details
-                </Link>
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/project/${project.id}`);
+                }}
+                onSelect={(e) => e.preventDefault()}
+              >
+                View Details
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
