@@ -61,29 +61,24 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     };
 
     onEditTask(task.id, updatedTask);
-    closeModal();
+    
+    // Close without the timeout to prevent UI locking
+    onOpenChange(false);
     toast.success('Task updated successfully');
   };
 
-  // Safe close modal function
-  const closeModal = () => {
-    // Force reset UI state after closing
-    setTimeout(() => {
-      onOpenChange(false);
-    }, 0);
+  // Safe close modal function - simplified to directly call onOpenChange
+  const handleCancel = () => {
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={closeModal} modal={true}>
+    <Dialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+    >
       <DialogContent 
         className="sm:max-w-[500px] p-0 overflow-hidden bg-background"
-        onPointerDownOutside={(e) => {
-          e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          e.preventDefault();
-          closeModal();
-        }}
       >
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">Edit Task</DialogTitle>
@@ -131,7 +126,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           </div>
           
           <FormActions 
-            onCancel={closeModal} 
+            onCancel={handleCancel} 
             submitLabel="Save Changes" 
           />
         </form>
