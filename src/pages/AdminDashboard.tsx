@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Save, AlertCircle, RefreshCw } from 'lucide-react';
+import { Shield, Save, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -49,7 +49,6 @@ const AdminDashboard = () => {
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({});
   const [savingChanges, setSavingChanges] = useState(false);
-  const [processingBulkUpdate, setProcessingBulkUpdate] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -152,58 +151,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const updateAllClientsToDevs = async () => {
-    setProcessingBulkUpdate(true);
-    try {
-      // Get all users with 'Client' role
-      const clientUsers = users.filter(user => user.role === 'Client');
-      
-      if (clientUsers.length === 0) {
-        toast.info('No clients to update');
-        return;
-      }
-
-      // Create pending changes for all clients
-      const changes: Record<string, string> = {};
-      clientUsers.forEach(user => {
-        changes[user.id] = 'Developer';
-      });
-
-      // Update roles one by one
-      for (const [userId, role] of Object.entries(changes)) {
-        console.log(`Updating user ${userId} from Client to Developer`);
-        
-        const { data, error } = await supabase.rpc('update_user_role', { 
-          target_user_id: userId, 
-          new_role: role 
-        });
-        
-        if (error) {
-          console.error(`Error updating user role ${userId}:`, error);
-          throw new Error(`Failed to update user ${userId}: ${error.message}`);
-        }
-      }
-
-      // Update local state
-      setUsers(users.map((user) => {
-        if (user.role === 'Client') {
-          return { ...user, role: 'Developer' as any };
-        }
-        return user;
-      }));
-
-      toast.success(`Updated ${clientUsers.length} clients to developers`);
-      
-      // Refresh to ensure we have the latest data
-      fetchUsers();
-    } catch (error: any) {
-      console.error('Error in bulk role update:', error);
-      toast.error(`Failed to update client roles: ${error.message}`);
-    } finally {
-      setProcessingBulkUpdate(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col dark:bg-gray-900">
@@ -256,16 +203,6 @@ const AdminDashboard = () => {
             </div>
             
             <div className="flex gap-2">
-              <Button 
-                onClick={updateAllClientsToDevs} 
-                disabled={processingBulkUpdate || savingChanges}
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <RefreshCw className={`h-4 w-4 ${processingBulkUpdate ? 'animate-spin' : ''}`} />
-                Change All Clients to Developers
-              </Button>
-              
               {Object.keys(pendingChanges).length > 0 && (
                 <Button 
                   onClick={saveChanges} 
