@@ -73,8 +73,14 @@ const AdminDashboard = () => {
             throw profilesError;
           }
 
-          setUsers(profilesData);
-          console.log("Fetched users:", profilesData.length);
+          // Ensure all users have a default role if missing
+          const processedProfiles = profilesData.map(profile => ({
+            ...profile,
+            role: profile.role || 'Client' // Default to 'Client' if role is null or empty
+          }));
+
+          setUsers(processedProfiles);
+          console.log("Fetched users:", processedProfiles);
         } else {
           toast.error("You don't have admin privileges");
         }
@@ -247,7 +253,7 @@ const AdminDashboard = () => {
                       <TableCell>{user.email || 'No email available'}</TableCell>
                       <TableCell>
                         <Select
-                          value={pendingChanges[user.id] || user.role || ''}
+                          value={pendingChanges[user.id] || user.role || 'Client'}
                           onValueChange={(value) => handleRoleChange(user.id, value)}
                         >
                           <SelectTrigger className="w-[180px]">
