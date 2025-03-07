@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Task, TaskStatus } from '@/lib/types';
 import { format } from 'date-fns';
-import { MessageCircle, MoreHorizontal, ChevronDown } from 'lucide-react';
+import { MessageCircle, MoreHorizontal, User } from 'lucide-react';
 import PriorityBadge from './PriorityBadge';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,6 +18,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TaskCardProps {
   task: Task;
@@ -100,9 +106,15 @@ const TaskCard: React.FC<TaskCardProps> = ({
         
         <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3 break-words">{task.description}</p>
         
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs text-muted-foreground dark:text-gray-400 mb-3 gap-2">
-          <div className="flex items-center gap-2">
+        {/* Task metadata - three distinct rows for better readability */}
+        <div className="flex flex-col space-y-2 text-xs text-muted-foreground dark:text-gray-400 mb-3">
+          {/* Row 1: Updated time */}
+          <div className="flex items-center">
             <span>Updated {format(task.updated, 'MMM d')}</span>
+          </div>
+          
+          {/* Row 2: Status dropdown */}
+          <div className="flex items-center">
             <Select value={task.status} onValueChange={handleStatusChange}>
               <SelectTrigger className="h-7 w-[110px] text-xs bg-muted/50 dark:bg-gray-700/50 border-none focus:ring-0">
                 <SelectValue placeholder="Status" />
@@ -118,8 +130,24 @@ const TaskCard: React.FC<TaskCardProps> = ({
               </SelectContent>
             </Select>
           </div>
+          
+          {/* Row 3: Assignee with tooltip for long names */}
           {task.assignee && (
-            <span className="bg-muted dark:bg-gray-700 px-2 py-1 rounded truncate max-w-full sm:max-w-[120px]">{task.assignee}</span>
+            <div className="flex items-center">
+              <User className="h-3 w-3 mr-1" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="bg-muted dark:bg-gray-700 px-2 py-1 rounded truncate max-w-full sm:max-w-[200px]">
+                      {task.assignee}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{task.assignee}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           )}
         </div>
         
