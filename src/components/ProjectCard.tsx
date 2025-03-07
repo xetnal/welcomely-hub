@@ -3,16 +3,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Project } from '@/lib/types';
 import { format } from 'date-fns';
-import { CalendarDays, User, Users } from 'lucide-react';
+import { CalendarDays, User, Users, Pencil } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 interface ProjectCardProps {
   project: Project;
   index: number;
+  onEditProject: (project: Project) => void;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject }) => {
   const getStatusColor = (status: Project['status']) => {
     switch (status) {
       case 'active':
@@ -24,6 +27,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
       default:
         return 'bg-gray-50 text-gray-600 border-gray-200';
     }
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation to project details
+    onEditProject(project);
   };
 
   return (
@@ -38,8 +46,33 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
     >
       <Link 
         to={`/project/${project.id}`} 
-        className="block glass card-hover rounded-xl overflow-hidden"
+        className="block glass card-hover rounded-xl overflow-hidden relative"
       >
+        <div className="absolute top-2 right-2 z-10">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-8 w-8 rounded-full hover:bg-black/10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-2" align="end">
+              <Button 
+                size="sm" 
+                variant="ghost"
+                className="w-full justify-start" 
+                onClick={handleEditClick}
+              >
+                Edit Project
+              </Button>
+            </PopoverContent>
+          </Popover>
+        </div>
+        
         <div className="p-6">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-lg font-medium">{project.name}</h3>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Search, Plus, Filter } from 'lucide-react';
@@ -8,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import AddProjectModal from '@/components/AddProjectModal';
+import EditProjectModal from '@/components/EditProjectModal';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -42,6 +44,8 @@ const fetchProjects = async (userId: string | undefined) => {
 
 const Index = () => {
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
+  const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
@@ -97,6 +101,46 @@ const Index = () => {
         variant: "destructive",
       });
       console.error("Error creating project:", err);
+    }
+  };
+
+  const handleEditProject = (project: Project) => {
+    setSelectedProject(project);
+    setIsEditProjectModalOpen(true);
+  };
+
+  const handleUpdateProject = async (projectId: string, updatedProject: Partial<Project>) => {
+    try {
+      const projectForSupabase = {
+        name: updatedProject.name,
+        client: updatedProject.client,
+        developer: updatedProject.developer,
+        manager: updatedProject.manager,
+        status: updatedProject.status,
+        description: updatedProject.description
+      };
+      
+      const { error } = await supabase
+        .from('projects')
+        .update(projectForSupabase)
+        .eq('id', projectId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Project updated successfully!",
+      });
+      
+      refetch();
+      
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err?.message || "Failed to update project",
+        variant: "destructive",
+      });
+      console.error("Error updating project:", err);
     }
   };
 
@@ -180,7 +224,12 @@ const Index = () => {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
+              <ProjectCard 
+                key={project.id} 
+                project={project} 
+                index={index} 
+                onEditProject={handleEditProject}
+              />
             ))}
           </div>
         )}
@@ -191,6 +240,15 @@ const Index = () => {
         onOpenChange={setIsAddProjectModalOpen}
         onAddProject={handleAddProject}
       />
+
+      {selectedProject && (
+        <EditProjectModal
+          open={isEditProjectModalOpen}
+          onOpenChange={setIsEditProjectModalOpen}
+          project={selectedProject}
+          onEditProject={handleUpdateProject}
+        />
+      )}
     </div>
   );
 };
