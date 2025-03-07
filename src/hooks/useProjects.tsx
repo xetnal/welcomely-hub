@@ -224,7 +224,11 @@ export const useProjects = () => {
 
       console.log("Attempting to submit project to database:", newProject);
       console.log("User ID being used:", user.id);
-      console.log("User session validity:", !!supabase.auth.session);
+      
+      // Fix: Remove the invalid session property access
+      // Get current session information using the getSession method instead
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("User session validity:", !!sessionData.session);
 
       const projectData = {
         name: newProject.name,
