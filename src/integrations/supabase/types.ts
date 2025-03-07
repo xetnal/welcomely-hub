@@ -187,6 +187,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_auth_user_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_authenticated_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string

@@ -17,14 +17,15 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
       .limit(100);
     
     if (error) {
+      console.error('Supabase query error:', error);
       throw error;
     }
     
-    console.log("Fetched employees:", data);
+    console.log("Fetched employees successfully:", data?.length || 0, "records");
     return data || [];
   } catch (error: any) {
     console.error('Error fetching employees:', error);
-    toast.error('Failed to load employees');
+    toast.error('Failed to load employees: ' + (error.message || 'Unknown error'));
     return [];
   }
 };
