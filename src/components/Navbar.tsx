@@ -45,9 +45,11 @@ const Navbar = () => {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center">
-                <span className="text-white font-bold">P</span>
-              </div>
+              <img 
+                src="/lovable-uploads/22886747-a1b6-4177-9722-48875351f084.png" 
+                alt="Workflow Hub Logo" 
+                className="h-8 w-auto"
+              />
             </motion.div>
             <motion.span 
               initial={{ x: -10, opacity: 0 }}
@@ -55,7 +57,7 @@ const Navbar = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="font-medium"
             >
-              Project Hub
+              Workflow Hub
             </motion.span>
           </Link>
           
@@ -87,7 +89,7 @@ const Navbar = () => {
             <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400">
               Settings
             </a>
-            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center dark:bg-gray-700">
+            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center dark:bg-primary/30 text-primary-foreground">
               <span className="text-xs font-medium">JD</span>
             </div>
           </div>

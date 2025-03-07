@@ -10,13 +10,15 @@ const StageProgressBar: React.FC<StageProgressBarProps> = ({ percentage }) => {
   // Ensure percentage is between 0 and 100
   const normalizedPercentage = Math.min(Math.max(percentage, 0), 100);
   
-  // Calculate color based on percentage (red to green gradient)
+  // Calculate color based on percentage (pale pink to coral gradient)
   const getColor = (percent: number) => {
-    // Red: rgb(234, 56, 76) to Green: rgb(34, 197, 94)
-    const r = Math.round(234 - (234 - 34) * (percent / 100));
-    const g = Math.round(56 + (197 - 56) * (percent / 100));
-    const b = Math.round(76 + (94 - 76) * (percent / 100));
-    return `rgb(${r}, ${g}, ${b})`;
+    if (percent < 30) {
+      return 'rgb(255, 204, 204)'; // Light pink
+    } else if (percent < 70) {
+      return 'rgb(255, 153, 153)'; // Medium pink
+    } else {
+      return 'rgb(255, 102, 102)'; // Coral
+    }
   };
 
   const progressColor = getColor(normalizedPercentage);
