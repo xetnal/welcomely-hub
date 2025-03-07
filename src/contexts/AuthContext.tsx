@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -38,23 +39,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for active session on mount
     const checkSession = async () => {
       try {
+        console.log("Checking for active session...");
         setLoading(true);
+        
         const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (error) {
           console.error("Error getting session:", error);
-        }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // If we have a user, ensure they have a profile record
-        if (session?.user) {
-          const fullName = session.user.user_metadata?.full_name || 'User';
-          console.log("Session user found, ensuring profile exists:", fullName);
-          await ensureProfileExists(session.user.id, fullName);
+          setUser(null);
+          setSession(null);
+        } else {
+          console.log("Session check result:", session ? "Authenticated" : "Not authenticated");
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // If we have a user, ensure they have a profile record
+          if (session?.user) {
+            const fullName = session.user.user_metadata?.full_name || 'User';
+            console.log("Session user found, ensuring profile exists:", fullName);
+            await ensureProfileExists(session.user.id, fullName);
+          }
         }
       } catch (error) {
         console.error("Unexpected error during session check:", error);
+        setUser(null);
+        setSession(null);
       } finally {
         setLoading(false);
       }
@@ -64,19 +73,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log("Auth state changed, event:", _event);
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, newSession) => {
+        console.log("Auth state changed, event:", event);
+        setLoading(true);
         
-        // If we have a user, ensure they have a profile record
-        if (session?.user) {
-          const fullName = session.user.user_metadata?.full_name || 'User';
-          console.log("Auth change user found, ensuring profile exists:", fullName);
-          await ensureProfileExists(session.user.id, fullName);
+        try {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          
+          // If we have a user, ensure they have a profile record
+          if (newSession?.user) {
+            const fullName = newSession.user.user_metadata?.full_name || 'User';
+            console.log("Auth change user found, ensuring profile exists:", fullName);
+            await ensureProfileExists(newSession.user.id, fullName);
+          }
+        } catch (error) {
+          console.error("Error during auth state change handling:", error);
+        } finally {
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -88,6 +103,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
       console.log("Signing up user:", email, fullName);
+      setLoading(true);
+      
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -122,64 +139,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log("Signing in user:", email);
+      setLoading(true);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
       if (error) throw error;
+      
+      console.log("Sign in successful:", data?.user?.id);
+      
       toast({
         title: "Welcome back",
         description: "You have successfully signed in",
       });
     } catch (error: any) {
+      console.error("Error during sign in:", error);
+      
       toast({
         title: "Error signing in",
         description: error.message,
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      setLoading(true); // Set loading to true during sign out
+      console.log("Signing out...");
+      setLoading(true);
       
-      // First, clear the local state regardless of API call success
+      // Clear state first for better UX
       setUser(null);
       setSession(null);
       
-      try {
-        // Now attempt to sign out with Supabase
-        const { error } = await supabase.auth.signOut();
-        
-        if (error) {
-          console.error("Error during sign out:", error);
-          // Even if there's an error, we've already cleared the local state
-        }
-      } catch (error: any) {
-        // This catch block handles cases where the session might not exist
-        console.error("Error during sign out:", error);
-        // We've already cleared the local state, so we can continue
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error during sign out from Supabase:", error);
+        throw error;
       }
+      
+      console.log("Signed out successfully");
       
       toast({
         title: "Signed out",
         description: "You have been signed out successfully",
       });
       
-      // Redirect to auth page after successful sign out
+      // Navigate to auth page after successful sign out
       navigate('/auth');
     } catch (error: any) {
+      console.error("Error during sign out:", error);
+      
       toast({
         title: "Error signing out",
         description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 

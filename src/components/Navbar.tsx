@@ -1,5 +1,5 @@
 
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sun, Moon, LogOut, LogIn } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -10,6 +10,8 @@ const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { user, signOut, loading } = useAuth();
   const location = useLocation();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check for saved theme preference
@@ -26,6 +28,13 @@ const Navbar = () => {
       localStorage.setItem('theme', 'light');
     }
   }, []);
+
+  // Reset signing out state when user changes
+  useEffect(() => {
+    if (!user) {
+      setIsSigningOut(false);
+    }
+  }, [user]);
 
   const toggleDarkMode = () => {
     if (isDarkMode) {
@@ -44,7 +53,13 @@ const Navbar = () => {
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
-    await signOut();
+    setIsSigningOut(true);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Sign out error:", error);
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -130,10 +145,10 @@ const Navbar = () => {
                   variant="ghost" 
                   className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400"
                   onClick={handleSignOut}
-                  disabled={loading}
+                  disabled={isSigningOut || loading}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  {loading ? "Signing out..." : "Sign Out"}
+                  {isSigningOut ? "Signing out..." : "Sign Out"}
                 </Button>
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center dark:bg-primary/30 text-primary-foreground">
                   <span className="text-xs font-medium">
