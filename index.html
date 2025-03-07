@@ -14,10 +14,9 @@
       .logo-container img {
         mix-blend-mode: multiply;
       }
-      @media (prefers-color-scheme: dark) {
-        .logo-container img {
-          mix-blend-mode: screen;
-        }
+      /* In dark mode, use 'screen' to keep the red/coral color visible but make white transparent */
+      .dark .logo-container img {
+        mix-blend-mode: screen;
       }
     </style>
   </head>

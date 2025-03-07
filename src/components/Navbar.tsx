@@ -51,7 +51,7 @@ const Navbar = () => {
                 src="/lovable-uploads/22886747-a1b6-4177-9722-48875351f084.png" 
                 alt="Workflow Hub Logo" 
                 className="h-8 w-auto relative z-10"
-                style={{ mixBlendMode: 'multiply' }}
+                style={{ mixBlendMode: isDarkMode ? 'screen' : 'multiply' }}
               />
             </motion.div>
             <motion.span 
