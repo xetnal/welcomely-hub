@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -21,7 +21,7 @@ const Auth = () => {
   const from = location.state?.from?.pathname || '/';
 
   // Redirect if user is already authenticated
-  if (user && !loading) {
+  if (user && !authLoading) {
     return <Navigate to={from} replace />;
   }
 
@@ -30,6 +30,8 @@ const Auth = () => {
     setIsLoading(true);
     try {
       await signIn(email, password);
+    } catch (error) {
+      console.error('Sign in error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -40,6 +42,8 @@ const Auth = () => {
     setIsLoading(true);
     try {
       await signUp(email, password, fullName);
+    } catch (error) {
+      console.error('Sign up error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -101,7 +105,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </CardFooter>
@@ -153,7 +157,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Creating account..." : "Create account"}
                   </Button>
                 </CardFooter>
