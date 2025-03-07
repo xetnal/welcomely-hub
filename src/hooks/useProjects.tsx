@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Project } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +16,7 @@ export const useProjects = () => {
 
   useEffect(() => {
     console.log('useProjects hook initializing, user status:', user ? 'logged in' : 'not logged in');
-    console.log('Supabase URL being used:', supabase.supabaseUrl);
+    console.log('Supabase connection being used with project ID:', 'ojleksibqzqzjsjlfmpu');
     
     const checkConnection = async () => {
       await checkSupabaseConnection();
@@ -27,7 +26,6 @@ export const useProjects = () => {
       }
     };
     
-    // Set a timeout to show "no projects" message if fetch takes too long
     const timeoutId = setTimeout(() => {
       if (loading && projects.length === 0) {
         console.log('Fetch timed out after 5 seconds');
@@ -46,14 +44,12 @@ export const useProjects = () => {
     setConnectionStatus('checking');
     
     try {
-      // First, try to ping the database
       console.log('Attempting to ping database with RPC call...');
       const { data: pingData, error: pingError } = await supabase.rpc('ping_db');
       
       if (pingError) {
         console.error('RPC ping failed, trying direct table query:', pingError);
         
-        // If RPC fails, try a simple table query as fallback
         const { data, error } = await supabase
           .from('projects')
           .select('count', { count: 'exact', head: true });
@@ -93,7 +89,6 @@ export const useProjects = () => {
       setFetchError(null);
       console.log('Fetching projects...');
       
-      // Directly query the projects table
       const { data, error } = await supabase
         .from('projects')
         .select('*')
@@ -106,7 +101,6 @@ export const useProjects = () => {
       console.log('Projects fetched successfully:', data);
       
       if (data && data.length > 0) {
-        // Transform the data to match our Project type
         const transformedProjects: Project[] = data.map(project => ({
           id: project.id,
           name: project.name,
@@ -147,7 +141,6 @@ export const useProjects = () => {
       console.log("Submitting project to database:", newProject);
       console.log("User ID being used:", user.id);
 
-      // Transform Project to database format
       const projectData = {
         name: newProject.name,
         client: newProject.client,
@@ -177,7 +170,6 @@ export const useProjects = () => {
       console.log("Project created successfully - result:", data);
       toast.success('Project created successfully');
       
-      // Refresh projects from database
       await fetchProjects();
     } catch (error: any) {
       toast.error(`Error creating project: ${error.message}`);
