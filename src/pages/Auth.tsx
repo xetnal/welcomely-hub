@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Auth = () => {
-  const { user, signIn, signUp, signOut, loading } = useAuth();
+  const { user, signIn, signUp, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -28,24 +28,9 @@ const Auth = () => {
       currentPath: location.pathname,
       redirectTarget: from
     });
+  }, [user, loading, location.pathname, from]);
 
-    // If we detect a user is already logged in when they visit the auth page,
-    // sign them out first to ensure a clean auth state
-    const handleExistingSession = async () => {
-      if (user && !loading) {
-        console.log("User already logged in on auth page, signing out first");
-        try {
-          await signOut();
-        } catch (error) {
-          console.error("Error signing out existing user:", error);
-        }
-      }
-    };
-    
-    handleExistingSession();
-  }, [user, loading, signOut, location.pathname, from]);
-
-  // Only redirect away from auth page if user is authenticated AND we're not in the process of signing them out
+  // Only redirect away from auth page if user is authenticated AND we're not in the process of loading
   if (user && !loading && from !== '/auth') {
     console.log("Redirecting authenticated user from auth page to:", from);
     return <Navigate to={from} replace />;
