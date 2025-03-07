@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -44,12 +43,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             currentPath: location.pathname
           });
           
-          // If we're on the auth page but have a valid session, redirect to home
           if (data.session && location.pathname === '/auth') {
             navigate('/', { replace: true });
-          }
-          // If we're not on the auth page and have no session, redirect to auth
-          else if (!data.session && location.pathname !== '/auth') {
+          } else if (!data.session && location.pathname !== '/auth') {
             navigate('/auth', { replace: true });
           }
         }
@@ -64,7 +60,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkSession();
 
-    // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.email);
@@ -72,7 +67,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(currentSession?.user ?? null);
         setLoading(false);
         
-        // When auth state changes to SIGNED_OUT, redirect to login page
         if (event === 'SIGNED_OUT') {
           console.log("User signed out, redirecting to auth page");
           navigate('/auth', { replace: true });
@@ -135,30 +129,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Attempting to sign out");
       setLoading(true);
       
-      // First attempt to sign out from Supabase
-      try {
-        const { error } = await supabase.auth.signOut();
-        if (error && error.message !== "Auth session missing!") {
-          console.error("Error during sign out:", error);
-          throw error;
-        }
-      } catch (supabaseError) {
-        console.warn("Supabase sign out error:", supabaseError);
-        // Continue with local sign out even if Supabase errors
-      }
-      
-      // Force clear local auth state regardless of Supabase response
       setUser(null);
       setSession(null);
+      
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.warn("Supabase sign out error:", error);
+      }
       
       console.log("Sign out successful");
       toast.success("Signed out successfully");
       
-      // Force redirect to auth page
       navigate('/auth', { replace: true });
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast.error(`Error signing out: ${error.message}`);
+      navigate('/auth', { replace: true });
     } finally {
       setLoading(false);
     }

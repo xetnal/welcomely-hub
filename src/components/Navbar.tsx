@@ -44,11 +44,15 @@ const Navbar = () => {
   };
 
   const handleSignOut = async () => {
+    if (isSigningOut) return; // Prevent multiple clicks
+    
     try {
       setIsSigningOut(true);
       await signOut();
-    } finally {
-      setIsSigningOut(false);
+      // The redirect will be handled inside the signOut function
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      setIsSigningOut(false); // Reset only on error
     }
   };
 
