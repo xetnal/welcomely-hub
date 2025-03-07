@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Project } from '@/lib/types';
 import { format } from 'date-fns';
 import { CalendarDays, User, Users, MoreHorizontal } from 'lucide-react';
@@ -21,6 +21,8 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject }) => {
+  const navigate = useNavigate();
+  
   const getStatusColor = (status: Project['status']) => {
     switch (status) {
       case 'active':
@@ -34,15 +36,18 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
     }
   };
 
+  const handleCardClick = () => {
+    navigate(`/project/${project.id}`);
+  };
+
   const handleEditClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation to project details
-    e.stopPropagation(); // Stop event from bubbling up to parent Link
+    e.preventDefault(); 
+    e.stopPropagation();
     onEditProject(project);
   };
 
-  const handleViewDetailsClick = (e: React.MouseEvent) => {
-    // Allow normal navigation without prevention
-    // This is handled by the Link component
+  const handleDropdownClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   return (
@@ -55,25 +60,31 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
         ease: [0.22, 1, 0.36, 1]
       }}
     >
-      <div className="block glass card-hover rounded-xl overflow-hidden relative">
+      <div 
+        className="block glass card-hover rounded-xl overflow-hidden relative cursor-pointer"
+        onClick={handleCardClick}
+      >
         <div className="absolute top-2 right-2 z-10">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild onClick={handleDropdownClick}>
               <Button 
                 size="icon" 
                 variant="ghost" 
                 className="h-8 w-8 rounded-full hover:bg-black/10"
-                onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuContent align="end" onClick={handleDropdownClick}>
               <DropdownMenuItem onClick={handleEditClick}>
                 Edit Project
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to={`/project/${project.id}`} onClick={handleViewDetailsClick}>
+              <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                <Link 
+                  to={`/project/${project.id}`} 
+                  className="w-full block"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   View Details
                 </Link>
               </DropdownMenuItem>
