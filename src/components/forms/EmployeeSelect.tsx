@@ -51,10 +51,10 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
             <SelectItem disabled value="loading">Loading employees...</SelectItem>
           ) : (
             employees.map((employee) => (
-              <SelectItem key={employee.id} value={employee.full_name}>
+              <SelectItem key={employee.id} value={employee.full_name || ''}>
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  {employee.full_name}
+                  {employee.full_name || 'Unknown User'}
                 </div>
               </SelectItem>
             ))

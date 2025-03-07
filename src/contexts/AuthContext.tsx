@@ -4,6 +4,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { createEmployeeFromUser } from '@/services/employeeService';
 
 type AuthContextType = {
   user: User | null;
@@ -32,6 +33,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // If user exists, ensure they have an employee record
+      if (session?.user) {
+        const fullName = session.user.user_metadata.full_name || 'Unknown User';
+        await createEmployeeFromUser(session.user.id, fullName);
+      }
+      
       setLoading(false);
     };
 
@@ -39,9 +47,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // If user exists, ensure they have an employee record
+        if (session?.user) {
+          const fullName = session.user.user_metadata.full_name || 'Unknown User';
+          await createEmployeeFromUser(session.user.id, fullName);
+        }
+        
         setLoading(false);
       }
     );
