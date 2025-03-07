@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+
+import React, { useState, useCallback, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Check, Pencil, Plus, User, List, Layout } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -16,291 +17,352 @@ import AddTaskModal from '@/components/AddTaskModal';
 import StageProgressBar from '@/components/StageProgressBar';
 import StageCompletionButton from '@/components/StageCompletionButton';
 import { Toaster, toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 
-const mockProject: Project = {
-  id: '1',
-  name: 'Website Redesign',
-  client: 'Acme Corporation',
-  developer: 'Jane Smith',
-  startDate: new Date(2023, 7, 15),
-  endDate: new Date(2023, 9, 30),
-  status: 'active',
-  description: 'Complete website redesign with new branding, improved UX, and mobile-first approach.',
-  completedStages: [],
-  tasks: [
-    {
-      id: 't1',
-      title: 'Create wireframes',
-      description: 'Design initial wireframes for homepage and key pages',
-      stage: 'Design',
-      status: 'In Progress',
-      priority: 'high',
-      assignee: 'Jane Smith',
-      comments: [
-        {
-          id: 'c1',
-          author: 'John Doe',
-          content: 'Looks good! Can we add a section for testimonials?',
-          timestamp: new Date(2023, 7, 20, 14, 30)
-        },
-        {
-          id: 'c2',
-          author: 'Jane Smith',
-          content: "Good point, I'll add that to the next iteration.",
-          timestamp: new Date(2023, 7, 20, 15, 45)
-        }
-      ],
-      created: new Date(2023, 7, 18),
-      updated: new Date(2023, 7, 20)
-    },
-    {
-      id: 't2',
-      title: 'Content inventory',
-      description: 'Catalog all existing content and identify gaps',
-      stage: 'Preparation',
-      status: 'Completed',
-      priority: 'medium',
-      assignee: 'Alex Johnson',
-      comments: [],
-      created: new Date(2023, 7, 16),
-      updated: new Date(2023, 7, 16)
-    },
-    {
-      id: 't3',
-      title: 'Competitor analysis',
-      description: 'Review competitor websites and identify opportunities',
-      stage: 'Analysis',
-      status: 'In Review',
-      priority: 'medium',
-      assignee: 'Jane Smith',
-      comments: [
-        {
-          id: 'c3',
-          author: 'Michael Brown',
-          content: 'Found three sites we should analyze in detail.',
-          timestamp: new Date(2023, 7, 17, 11, 15)
-        }
-      ],
-      created: new Date(2023, 7, 16),
-      updated: new Date(2023, 7, 17)
-    },
-    {
-      id: 't4',
-      title: 'Setup development environment',
-      description: 'Configure development, staging, and production environments',
-      stage: 'Development',
-      status: 'Completed',
-      priority: 'low',
-      assignee: 'John Doe',
-      comments: [],
-      created: new Date(2023, 7, 19),
-      updated: new Date(2023, 7, 19)
-    },
-    {
-      id: 't5',
-      title: 'Backend API integration',
-      description: 'Connect frontend to backend API services',
-      stage: 'Development',
-      status: 'In Progress',
-      priority: 'high',
-      assignee: 'John Doe',
-      comments: [],
-      created: new Date(2023, 7, 22),
-      updated: new Date(2023, 7, 22)
-    },
-    {
-      id: 't6',
-      title: 'User testing plan',
-      description: 'Create test scenarios and recruit test participants',
-      stage: 'Testing',
-      status: 'Backlog',
-      priority: 'medium',
-      assignee: 'Emily Chen',
-      comments: [],
-      created: new Date(2023, 7, 23),
-      updated: new Date(2023, 7, 23)
-    },
-    {
-      id: 't7',
-      title: 'Stakeholder presentation',
-      description: 'Prepare and deliver presentation to key stakeholders',
-      stage: 'Preparation',
-      status: 'Blocked',
-      priority: 'high',
-      assignee: 'Jane Smith',
-      comments: [],
-      created: new Date(2023, 7, 24),
-      updated: new Date(2023, 7, 24)
-    },
-    {
-      id: 't8',
-      title: 'DNS Configuration',
-      description: 'Setup DNS records for the new website',
-      stage: 'Go Live',
-      status: 'Backlog',
-      priority: 'urgent',
-      assignee: 'John Doe',
-      comments: [
-        {
-          id: 'c4',
-          author: 'Alex Johnson',
-          content: 'Do we have access to the domain registrar?',
-          timestamp: new Date(2023, 7, 25, 9, 30)
-        },
-        {
-          id: 'c5',
-          author: 'John Doe',
-          content: 'Yes, credentials are in the shared password manager.',
-          timestamp: new Date(2023, 7, 25, 10, 15)
-        }
-      ],
-      created: new Date(2023, 7, 25),
-      updated: new Date(2023, 7, 25)
-    },
-    {
-      id: 't9',
-      title: 'Client UAT session',
-      description: 'Conduct user acceptance testing with the client team',
-      stage: 'UAT',
-      status: 'In Progress',
-      priority: 'high',
-      assignee: 'Emily Chen',
-      comments: [],
-      created: new Date(2023, 7, 26),
-      updated: new Date(2023, 7, 26)
-    }
-  ]
+const fetchProject = async (projectId: string) => {
+  // Fetch project details
+  const { data: project, error: projectError } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', projectId)
+    .single();
+
+  if (projectError) throw new Error(projectError.message);
+  
+  // Fetch tasks for this project
+  const { data: tasks, error: tasksError } = await supabase
+    .from('tasks')
+    .select('*, comments(*)')
+    .eq('project_id', projectId);
+
+  if (tasksError) throw new Error(tasksError.message);
+
+  // Transform the tasks to match our frontend Task type
+  const formattedTasks = tasks.map(task => ({
+    id: task.id,
+    title: task.title,
+    description: task.description || '',
+    stage: task.stage,
+    status: task.status,
+    priority: task.priority,
+    assignee: task.assignee || 'Unassigned',
+    isClientTask: task.is_client_task,
+    comments: (task.comments || []).map((comment: any) => ({
+      id: comment.id,
+      author: comment.author,
+      content: comment.content,
+      timestamp: new Date(comment.created_at)
+    })),
+    created: new Date(task.created_at),
+    updated: new Date(task.updated_at)
+  }));
+
+  // Return formatted project data
+  return {
+    id: project.id,
+    name: project.name,
+    client: project.client,
+    developer: project.developer,
+    manager: project.manager || 'Unassigned',
+    startDate: new Date(project.start_date),
+    endDate: new Date(project.end_date),
+    status: project.status,
+    description: project.description || '',
+    completedStages: project.completed_stages || [],
+    tasks: formattedTasks
+  } as Project;
 };
 
 const ProjectDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeStage, setActiveStage] = useState<ProjectStage>('Development');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setProject(mockProject);
-      setLoading(false);
-    }, 500);
+  const { data: project, isLoading, error } = useQuery({
+    queryKey: ['project', id],
+    queryFn: () => fetchProject(id || ''),
+    enabled: !!id && !!user,
+  });
 
-    return () => clearTimeout(timer);
-  }, [id]);
+  // Handle API errors
+  React.useEffect(() => {
+    if (error) {
+      toast.error('Failed to load project details');
+      console.error('Error fetching project details:', error);
+    }
+  }, [error]);
 
-  const stages: ProjectStage[] = [
-    'Preparation',
-    'Analysis',
-    'Design',
-    'Development',
-    'Testing',
-    'UAT',
-    'Go Live'
-  ];
+  const moveTaskMutation = useMutation({
+    mutationFn: async ({ taskId, newStatus }: { taskId: string, newStatus: TaskStatus }) => {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus, updated_at: new Date() })
+        .eq('id', taskId);
+      
+      if (error) throw error;
+      return { taskId, newStatus };
+    },
+    onSuccess: ({ taskId, newStatus }) => {
+      queryClient.setQueryData(['project', id], (old: any) => {
+        if (!old) return old;
+        
+        return {
+          ...old,
+          tasks: old.tasks.map((task: Task) => 
+            task.id === taskId ? { ...task, status: newStatus, updated: new Date() } : task
+          )
+        };
+      });
+      
+      toast.success('Task updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update task');
+      console.error('Error updating task status:', error);
+    }
+  });
 
-  const statuses: TaskStatus[] = [
-    'Backlog',
-    'In Progress',
-    'Blocked',
-    'In Review',
-    'Completed'
-  ];
+  const addTaskMutation = useMutation({
+    mutationFn: async (newTask: Omit<Task, 'id' | 'created' | 'updated' | 'comments'>) => {
+      // Format task for Supabase
+      const taskForSupabase = {
+        title: newTask.title,
+        description: newTask.description,
+        stage: newTask.stage,
+        status: newTask.status,
+        priority: newTask.priority,
+        assignee: newTask.assignee,
+        is_client_task: newTask.isClientTask,
+        project_id: id,
+        user_id: user?.id
+      };
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert(taskForSupabase)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      // Add new task to the locally cached data
+      queryClient.setQueryData(['project', id], (old: any) => {
+        if (!old) return old;
+        
+        const newTask: Task = {
+          id: data.id,
+          title: data.title,
+          description: data.description || '',
+          stage: data.stage,
+          status: data.status,
+          priority: data.priority,
+          assignee: data.assignee || 'Unassigned',
+          isClientTask: data.is_client_task,
+          comments: [],
+          created: new Date(data.created_at),
+          updated: new Date(data.updated_at)
+        };
+        
+        return {
+          ...old,
+          tasks: [...old.tasks, newTask]
+        };
+      });
+      
+      toast.success('Task added successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to add task');
+      console.error('Error adding task:', error);
+    }
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+      
+      if (error) throw error;
+      return taskId;
+    },
+    onSuccess: (taskId) => {
+      // Remove task from the locally cached data
+      queryClient.setQueryData(['project', id], (old: any) => {
+        if (!old) return old;
+        
+        return {
+          ...old,
+          tasks: old.tasks.filter((task: Task) => task.id !== taskId)
+        };
+      });
+      
+      toast.success('Task deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete task');
+      console.error('Error deleting task:', error);
+    }
+  });
+
+  const editTaskMutation = useMutation({
+    mutationFn: async ({ taskId, updatedTask }: { taskId: string, updatedTask: Partial<Task> }) => {
+      // Format task for Supabase
+      const taskForSupabase: any = {};
+      
+      if (updatedTask.title) taskForSupabase.title = updatedTask.title;
+      if (updatedTask.description !== undefined) taskForSupabase.description = updatedTask.description;
+      if (updatedTask.stage) taskForSupabase.stage = updatedTask.stage;
+      if (updatedTask.status) taskForSupabase.status = updatedTask.status;
+      if (updatedTask.priority) taskForSupabase.priority = updatedTask.priority;
+      if (updatedTask.assignee) taskForSupabase.assignee = updatedTask.assignee;
+      if (updatedTask.isClientTask !== undefined) taskForSupabase.is_client_task = updatedTask.isClientTask;
+      
+      taskForSupabase.updated_at = new Date();
+      
+      const { error } = await supabase
+        .from('tasks')
+        .update(taskForSupabase)
+        .eq('id', taskId);
+      
+      if (error) throw error;
+      return { taskId, updatedTask };
+    },
+    onSuccess: ({ taskId, updatedTask }) => {
+      // Update task in the locally cached data
+      queryClient.setQueryData(['project', id], (old: any) => {
+        if (!old) return old;
+        
+        return {
+          ...old,
+          tasks: old.tasks.map((task: Task) => 
+            task.id === taskId ? { ...task, ...updatedTask, updated: new Date() } : task
+          )
+        };
+      });
+      
+      toast.success('Task updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update task');
+      console.error('Error updating task:', error);
+    }
+  });
+
+  const addCommentMutation = useMutation({
+    mutationFn: async ({ taskId, content }: { taskId: string, content: string }) => {
+      const commentData = {
+        task_id: taskId,
+        author: user?.email || 'Anonymous',
+        content,
+        user_id: user?.id
+      };
+      
+      const { data, error } = await supabase
+        .from('comments')
+        .insert(commentData)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { taskId, comment: data };
+    },
+    onSuccess: ({ taskId, comment }) => {
+      // Add comment to the locally cached data
+      queryClient.setQueryData(['project', id], (old: any) => {
+        if (!old) return old;
+        
+        const newComment: Comment = {
+          id: comment.id,
+          author: comment.author,
+          content: comment.content,
+          timestamp: new Date(comment.created_at)
+        };
+        
+        return {
+          ...old,
+          tasks: old.tasks.map((task: Task) => 
+            task.id === taskId ? 
+            { 
+              ...task, 
+              comments: [...task.comments, newComment],
+              updated: new Date()
+            } : task
+          )
+        };
+      });
+      
+      toast.success('Comment added successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to add comment');
+      console.error('Error adding comment:', error);
+    }
+  });
+
+  const updateProjectStagesMutation = useMutation({
+    mutationFn: async (completedStages: ProjectStage[]) => {
+      const { error } = await supabase
+        .from('projects')
+        .update({ 
+          completed_stages: completedStages,
+          updated_at: new Date()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      return completedStages;
+    },
+    onSuccess: (completedStages) => {
+      // Update completed stages in the locally cached data
+      queryClient.setQueryData(['project', id], (old: any) => {
+        if (!old) return old;
+        
+        return {
+          ...old,
+          completedStages
+        };
+      });
+    },
+    onError: (error) => {
+      toast.error('Failed to update project stages');
+      console.error('Error updating project stages:', error);
+    }
+  });
 
   const moveTask = useCallback((taskId: string, newStatus: TaskStatus) => {
     if (!project) return;
-    
-    console.log(`Moving task ${taskId} to status: ${newStatus}`);
-    
-    setProject(prevProject => {
-      if (!prevProject) return prevProject;
+    moveTaskMutation.mutate({ taskId, newStatus });
+  }, [project, moveTaskMutation]);
 
-      return {
-        ...prevProject,
-        tasks: prevProject.tasks.map(task => 
-          task.id === taskId ? { ...task, status: newStatus } : task
-        )
-      };
-    });
-  }, [project]);
-
-  const addTask = useCallback((newTask: Task) => {
+  const addTask = useCallback((newTask: Omit<Task, 'id' | 'created' | 'updated' | 'comments'>) => {
     if (!project) return;
-    
-    console.log('Adding new task:', newTask);
-    
-    setProject(prevProject => {
-      if (!prevProject) return prevProject;
-
-      return {
-        ...prevProject,
-        tasks: [...prevProject.tasks, newTask]
-      };
-    });
-  }, [project]);
+    addTaskMutation.mutate(newTask);
+  }, [project, addTaskMutation]);
 
   const deleteTask = useCallback((taskId: string) => {
     if (!project) return;
-    
-    console.log(`Deleting task ${taskId}`);
-    
-    setProject(prevProject => {
-      if (!prevProject) return prevProject;
-
-      return {
-        ...prevProject,
-        tasks: prevProject.tasks.filter(task => task.id !== taskId)
-      };
-    });
-  }, [project]);
+    deleteTaskMutation.mutate(taskId);
+  }, [project, deleteTaskMutation]);
 
   const editTask = useCallback((taskId: string, updatedTask: Partial<Task>) => {
     if (!project) return;
-    
-    console.log(`Editing task ${taskId}:`, updatedTask);
-    
-    setProject(prevProject => {
-      if (!prevProject) return prevProject;
-
-      return {
-        ...prevProject,
-        tasks: prevProject.tasks.map(task => 
-          task.id === taskId ? { ...task, ...updatedTask } : task
-        )
-      };
-    });
-  }, [project]);
+    editTaskMutation.mutate({ taskId, updatedTask });
+  }, [project, editTaskMutation]);
 
   const addComment = useCallback((taskId: string, content: string) => {
     if (!project) return;
-    
-    console.log(`Adding comment to task ${taskId}: ${content}`);
-    
-    setProject(prevProject => {
-      if (!prevProject) return prevProject;
-
-      const newComment: Comment = {
-        id: `c${Date.now()}`,
-        author: "Current User",
-        content: content,
-        timestamp: new Date()
-      };
-
-      return {
-        ...prevProject,
-        tasks: prevProject.tasks.map(task => 
-          task.id === taskId ? 
-          { 
-            ...task, 
-            comments: [...task.comments, newComment],
-            updated: new Date()
-          } : task
-        )
-      };
-    });
-
-    toast.success('Comment added successfully');
-  }, [project]);
+    addCommentMutation.mutate({ taskId, content });
+  }, [project, addCommentMutation]);
 
   const overallCompletionPercentage = useMemo(() => {
     if (!project) return 0;
@@ -322,34 +384,45 @@ const ProjectDetails = () => {
     return Math.round((completedTasks.length / stageTasks.length) * 100);
   }, [project, activeStage]);
 
+  const stages: ProjectStage[] = [
+    'Preparation',
+    'Analysis',
+    'Design',
+    'Development',
+    'Testing',
+    'UAT',
+    'Go Live'
+  ];
+
+  const statuses: TaskStatus[] = [
+    'Backlog',
+    'In Progress',
+    'Blocked',
+    'In Review',
+    'Completed'
+  ];
+
   const toggleStageCompletion = useCallback((stage: ProjectStage) => {
     if (!project) return;
 
-    setProject(prevProject => {
-      if (!prevProject) return prevProject;
-
-      const completedStages = prevProject.completedStages || [];
+    const completedStages = project.completedStages || [];
+    let newCompletedStages: ProjectStage[];
+    
+    if (completedStages.includes(stage)) {
+      newCompletedStages = completedStages.filter(s => s !== stage);
+    } else {
+      newCompletedStages = [...completedStages, stage];
       
-      if (completedStages.includes(stage)) {
-        return {
-          ...prevProject,
-          completedStages: completedStages.filter(s => s !== stage)
-        };
-      } else {
-        const newCompletedStages = [...completedStages, stage];
-        
-        newCompletedStages.sort((a, b) => {
-          return stages.indexOf(a) - stages.indexOf(b);
-        });
-        
-        toast.success(`${stage} stage marked as complete`);
-        return {
-          ...prevProject,
-          completedStages: newCompletedStages
-        };
-      }
-    });
-  }, [project, stages]);
+      // Sort stages to maintain order
+      newCompletedStages.sort((a, b) => {
+        return stages.indexOf(a) - stages.indexOf(b);
+      });
+      
+      toast.success(`${stage} stage marked as complete`);
+    }
+    
+    updateProjectStagesMutation.mutate(newCompletedStages);
+  }, [project, stages, updateProjectStagesMutation]);
 
   const stageHasWarning = useCallback((stage: ProjectStage) => {
     if (!project || !project.completedStages?.includes(stage)) return false;
@@ -375,7 +448,7 @@ const ProjectDetails = () => {
     return project?.completedStages?.includes(stage) || false;
   }, [project]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
@@ -386,7 +459,7 @@ const ProjectDetails = () => {
     );
   }
 
-  if (!project) {
+  if (error || !project) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -394,7 +467,7 @@ const ProjectDetails = () => {
           <p className="text-muted-foreground mb-4">
             The project you're looking for doesn't exist or has been removed.
           </p>
-          <Link to="/" className="text-primary hover:underline">
+          <Link to="/projects" className="text-primary hover:underline">
             Return to Dashboard
           </Link>
         </div>
@@ -424,7 +497,7 @@ const ProjectDetails = () => {
           <div className="container py-6">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Link to="/" className="p-2 rounded-full hover:bg-muted transition-colors dark:hover:bg-gray-800">
+                <Link to="/projects" className="p-2 rounded-full hover:bg-muted transition-colors dark:hover:bg-gray-800">
                   <ArrowLeft className="h-5 w-5" />
                 </Link>
                 <div>
