@@ -25,11 +25,13 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
 }) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
     const loadEmployees = async () => {
       setIsLoading(true);
+      setLoadError(null);
       try {
         const employeeData = await fetchEmployees();
         
@@ -49,6 +51,7 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
         setEmployees(uniqueEmployees);
       } catch (error) {
         console.error('Error loading employees:', error);
+        setLoadError('Failed to load profiles');
       } finally {
         setIsLoading(false);
       }
@@ -70,6 +73,8 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
           <SelectItem value={defaultOption}>{defaultLabel}</SelectItem>
           {isLoading ? (
             <SelectItem disabled value="loading">Loading profiles...</SelectItem>
+          ) : loadError ? (
+            <SelectItem disabled value="error">{loadError}</SelectItem>
           ) : (
             employees.map((employee) => (
               <SelectItem key={employee.id} value={employee.full_name}>
