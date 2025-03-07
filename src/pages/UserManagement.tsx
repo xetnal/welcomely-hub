@@ -24,6 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from 'lucide-react';
 
+// Define the valid role types to match the database enum
+type UserRole = 'developer' | 'manager' | 'client' | 'admin';
+
 const UserManagement = () => {
   const { isAdmin } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
@@ -54,7 +57,7 @@ const UserManagement = () => {
     fetchUsers();
   }, [isAdmin, refreshKey]);
   
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
     try {
       const { error } = await supabase
         .from('profiles')
