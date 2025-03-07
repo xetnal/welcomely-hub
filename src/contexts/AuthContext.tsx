@@ -29,11 +29,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for active session on mount
     const checkSession = async () => {
       try {
-        console.info("Checking session...");
+        console.info("AuthContext: Checking session...");
         setLoading(true);
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Error getting session:", error);
+          console.error("AuthContext: Error getting session:", error);
           setLoading(false);
           return;
         }
@@ -43,17 +43,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // If user exists, ensure they have an employee record
         if (session?.user) {
-          console.info("Auth state changed: User found", session.user.email);
+          console.info("AuthContext: User found in session", session.user.email);
           const fullName = session.user.user_metadata.full_name || 'Unknown User';
           try {
             await createEmployeeFromUser(session.user.id, fullName);
           } catch (err) {
-            console.error("Error creating employee record:", err);
+            console.error("AuthContext: Error creating employee record:", err);
           }
+        } else {
+          console.info("AuthContext: No user in session");
         }
       } catch (err) {
-        console.error("Session check error:", err);
+        console.error("AuthContext: Session check error:", err);
       } finally {
+        console.info("AuthContext: Session check complete, setting loading=false");
         setLoading(false);
       }
     };
@@ -63,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.info("Auth state changed:", event, session?.user?.email);
+        console.info("AuthContext: Auth state changed:", event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -73,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             await createEmployeeFromUser(session.user.id, fullName);
           } catch (err) {
-            console.error("Error creating employee record:", err);
+            console.error("AuthContext: Error creating employee record:", err);
           }
         }
         
@@ -91,13 +94,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!loading) {
       // If user is logged in and on the auth page, redirect to home
       if (user && location.pathname === '/auth') {
-        console.log("Redirecting from auth page to home because user is authenticated");
+        console.log("AuthContext: Redirecting from auth page to home");
         navigate('/');
       }
     }
   }, [user, loading, location.pathname, navigate]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    console.log("AuthContext: Signing up user", email);
     try {
       setLoading(true);
       const { data, error } = await supabase.auth.signUp({ 
@@ -108,10 +112,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("AuthContext: Sign up error:", error);
+        throw error;
+      }
       
       if (data.user) {
-        console.log("Sign up successful:", data.user.email);
+        console.log("AuthContext: Sign up successful:", data.user.email);
       }
       
       toast({
@@ -119,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Please check your email for the confirmation link",
       });
     } catch (error: any) {
-      console.error("Sign up error:", error);
+      console.error("AuthContext: Sign up error:", error);
       toast({
         title: "Error signing up",
         description: error.message,
@@ -127,21 +134,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       throw error;
     } finally {
+      console.log("AuthContext: Sign up process complete, setting loading=false");
       setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
+    console.log("AuthContext: Signing in user", email);
     try {
       setLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
-        console.error("Sign in error:", error);
+        console.error("AuthContext: Sign in error:", error);
         throw error;
       }
       
-      console.log("Sign in successful:", data.user.email);
+      console.log("AuthContext: Sign in successful:", data.user.email);
       
       toast({
         title: "Welcome back",
@@ -150,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       navigate('/');
     } catch (error: any) {
-      console.error("Error details:", error);
+      console.error("AuthContext: Sign in error details:", error);
       toast({
         title: "Error signing in",
         description: error.message,
@@ -158,15 +167,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       throw error;
     } finally {
+      console.log("AuthContext: Sign in process complete, setting loading=false");
       setLoading(false);
     }
   };
 
   const signOut = async () => {
+    console.log("AuthContext: Signing out user");
     try {
       setLoading(true);
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error("AuthContext: Sign out error:", error);
+        throw error;
+      }
       
       toast({
         title: "Signed out",
@@ -180,7 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Redirect to auth page after successful sign out
       navigate('/auth');
     } catch (error: any) {
-      console.error("Sign out error:", error);
+      console.error("AuthContext: Sign out error:", error);
       toast({
         title: "Error signing out",
         description: error.message,
@@ -188,6 +202,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       throw error;
     } finally {
+      console.log("AuthContext: Sign out process complete, setting loading=false");
       setLoading(false);
     }
   };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -23,16 +24,17 @@ const Auth = () => {
   const from = location.state?.from?.pathname || '/';
 
   useEffect(() => {
-    // If loading completes and user is found, redirect
-    if (!authLoading && user) {
+    // If user is found, redirect
+    if (user) {
       console.log("Auth.tsx: User is authenticated, redirecting to", from);
       navigate(from, { replace: true });
     }
-  }, [user, authLoading, navigate, from]);
+  }, [user, navigate, from]);
 
-  // Clear loading state if auth loading changes
+  // Handle loading state changes
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && isLoading) {
+      console.log("Auth.tsx: Resetting loading state because authLoading is false");
       setIsLoading(false);
     }
   }, [authLoading]);
@@ -49,17 +51,19 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
+      console.log("Auth.tsx: Starting sign in process");
       await signIn(email, password);
-      // Navigation will happen automatically via the effect above
+      // We don't need to manually navigate - the useEffect will handle it
     } catch (err: any) {
+      console.error("Auth.tsx: Sign in error:", err);
       setError(err.message || 'Failed to sign in');
       toast({
         title: "Error signing in",
         description: err.message || 'Failed to sign in',
         variant: "destructive",
       });
-      console.error("Sign in error:", err);
-      setIsLoading(false); // Make sure to reset loading state on error
+      // Explicitly reset loading
+      setIsLoading(false);
     }
   };
 
@@ -69,21 +73,24 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
+      console.log("Auth.tsx: Starting sign up process");
       await signUp(email, password, fullName);
       toast({
         title: "Account created",
         description: "Please check your email for confirmation",
       });
-      setIsLoading(false); // Reset loading state after successful signup
+      // Explicitly reset loading
+      setIsLoading(false);
     } catch (err: any) {
+      console.error("Auth.tsx: Sign up error:", err);
       setError(err.message || 'Failed to sign up');
       toast({
         title: "Error creating account",
         description: err.message || 'Failed to create account',
         variant: "destructive",
       });
-      console.error("Sign up error:", err);
-      setIsLoading(false); // Reset loading state on error
+      // Explicitly reset loading
+      setIsLoading(false);
     }
   };
 

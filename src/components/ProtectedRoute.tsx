@@ -18,40 +18,42 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        console.log("Protected route: Checking session...");
+        console.log("ProtectedRoute: Checking session directly from supabase...");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("Session check error:", error);
+          console.error("ProtectedRoute: Session check error:", error);
           setCheckError(error.message);
           setSessionUser(null);
         } else {
           setSessionUser(data.session?.user || null);
           if (data.session?.user) {
-            console.log("Protected route: Session user found:", data.session.user.email);
+            console.log("ProtectedRoute: Session user found:", data.session.user.email);
           } else {
-            console.log("Protected route: No session user found");
+            console.log("ProtectedRoute: No session user found in direct check");
           }
         }
       } catch (err) {
-        console.error("Error checking session:", err);
+        console.error("ProtectedRoute: Error checking session:", err);
         setSessionUser(null);
       } finally {
+        console.log("ProtectedRoute: Direct session check complete, setting isCheckingSession=false");
         setIsCheckingSession(false);
       }
     };
 
     if (loading) {
+      // Only perform direct check if AuthContext is still loading
       checkSession();
     } else {
-      console.log("Protected route: Already checked auth context, user:", user?.email);
+      console.log("ProtectedRoute: Using auth context, user:", user?.email || "none");
       setIsCheckingSession(false);
     }
   }, [loading, user]);
 
   // If we're loading or checking session, show loading spinner
   if (loading || isCheckingSession) {
-    console.log("Protected route: Loading state, showing spinner");
+    console.log(`ProtectedRoute: Still loading (auth loading: ${loading}, checking session: ${isCheckingSession})`);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
@@ -64,7 +66,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // If there was an error checking the session
   if (checkError) {
-    console.error("Protected route: Session check error:", checkError);
+    console.error("ProtectedRoute: Session check error:", checkError);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="bg-destructive/15 text-destructive p-6 rounded-lg max-w-md">
@@ -83,12 +85,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // If user is not authenticated, redirect to auth page with the intended location
   if (!user && !sessionUser) {
-    console.log("Protected route: No authenticated user found, redirecting to /auth");
+    console.log("ProtectedRoute: No authenticated user found, redirecting to /auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // User is authenticated, render the protected content
-  console.log("Protected route: Authentication confirmed, rendering content");
+  console.log("ProtectedRoute: Authentication confirmed, rendering content");
   return <>{children}</>;
 };
 
