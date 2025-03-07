@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PageTransition from '@/components/PageTransition';
 import { Project } from '@/lib/types';
@@ -22,36 +21,30 @@ const Index = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      fetchProjects();
-      
-      // Set a timeout to show "no projects" message if fetch takes too long
-      const timeoutId = setTimeout(() => {
-        if (loading && projects.length === 0) {
-          console.log('Fetch timed out after 5 seconds');
-          setFetchTimedOut(true);
-          setLoading(false);
-        }
-      }, 5000);
-      
-      return () => clearTimeout(timeoutId);
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+    fetchProjects();
+    
+    // Set a timeout to show "no projects" message if fetch takes too long
+    const timeoutId = setTimeout(() => {
+      if (loading && projects.length === 0) {
+        console.log('Fetch timed out after 5 seconds');
+        setFetchTimedOut(true);
+        setLoading(false);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
       setFetchTimedOut(false);
-      console.log('Fetching projects...');
-      console.log('Current user ID:', user?.id);
+      console.log('Fetching all projects...');
       
-      // Explicitly fetch only projects that belong to the current user
+      // Fetch all projects without filtering by user_id
       const { data, error } = await supabase
         .from('projects')
         .select('*')
-        .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) {
