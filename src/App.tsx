@@ -11,8 +11,8 @@ import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -21,8 +21,8 @@ function App() {
           <Route path="/project/:projectId" element={<ProjectDetail />} />
         </Routes>
         <Toaster />
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
