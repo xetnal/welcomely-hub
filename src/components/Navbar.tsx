@@ -1,5 +1,5 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sun, Moon, LogOut, LogIn } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { user, signOut } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     // Check for saved theme preference
@@ -35,6 +36,10 @@ const Navbar = () => {
       localStorage.setItem('theme', 'dark');
     }
     setIsDarkMode(!isDarkMode);
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
 
   return (
@@ -67,15 +72,38 @@ const Navbar = () => {
           </Link>
           
           <nav className="hidden md:flex gap-6">
-            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary dark:text-gray-200">
-              Dashboard
+            <Link 
+              to="/" 
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive('/') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+              }`}
+            >
+              Home
             </Link>
-            <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400">
+            <Link 
+              to="/projects" 
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive('/projects') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+              }`}
+            >
+              Projects
+            </Link>
+            <Link 
+              to="/reports" 
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive('/reports') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+              }`}
+            >
               Reports
-            </a>
-            <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400">
+            </Link>
+            <Link 
+              to="/analytics" 
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive('/analytics') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+              }`}
+            >
               Analytics
-            </a>
+            </Link>
           </nav>
         </div>
         
