@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,14 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+  
+  // Get the pathname to redirect to after login
+  const from = location.state?.from?.pathname || '/';
 
   // Redirect if user is already authenticated
   if (user && !loading) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={from} replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -97,7 +101,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
                     {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </CardFooter>
@@ -149,7 +153,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
                     {isLoading ? "Creating account..." : "Create account"}
                   </Button>
                 </CardFooter>

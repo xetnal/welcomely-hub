@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -40,6 +40,11 @@ const Navbar = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await signOut();
   };
 
   return (
@@ -124,10 +129,11 @@ const Navbar = () => {
                 <Button 
                   variant="ghost" 
                   className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400"
-                  onClick={signOut}
+                  onClick={handleSignOut}
+                  disabled={loading}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                  {loading ? "Signing out..." : "Sign Out"}
                 </Button>
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center dark:bg-primary/30 text-primary-foreground">
                   <span className="text-xs font-medium">
