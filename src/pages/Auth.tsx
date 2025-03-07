@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,15 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Get the path the user was trying to access before being redirected to auth
+  const from = location.state?.from?.pathname || '/';
 
   // Redirect if user is already authenticated
   if (user && !loading) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={from} replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -26,6 +31,7 @@ const Auth = () => {
     setIsLoading(true);
     try {
       await signIn(email, password);
+      // Navigation will happen automatically via the condition above
     } finally {
       setIsLoading(false);
     }
