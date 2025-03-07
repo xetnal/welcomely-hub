@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { X, User } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+
+import React, { useState } from 'react';
+import { X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Project } from '@/lib/types';
 import { toast } from 'sonner';
-import { fetchEmployees, Employee } from '@/services/employeeService';
+import FormField from './forms/FormField';
+import FormActions from './forms/FormActions';
+import EmployeeSelect from './forms/EmployeeSelect';
+import StatusSelect from './forms/StatusSelect';
 
 interface AddProjectModalProps {
   open: boolean;
@@ -25,21 +27,6 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const [developer, setDeveloper] = useState('Unassigned');
   const [manager, setManager] = useState('Unassigned');
   const [status, setStatus] = useState<'active' | 'completed' | 'on-hold' | 'inactive'>('inactive');
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      loadEmployees();
-    }
-  }, [open]);
-
-  const loadEmployees = async () => {
-    setIsLoading(true);
-    const employeeData = await fetchEmployees();
-    setEmployees(employeeData);
-    setIsLoading(false);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,8 +79,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6 pt-2">
-          <div className="space-y-2">
-            <Label htmlFor="name">Project Name</Label>
+          <FormField id="name" label="Project Name">
             <Input
               id="name"
               value={name}
@@ -101,10 +87,9 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
               placeholder="Enter project name"
               required
             />
-          </div>
+          </FormField>
           
-          <div className="space-y-2">
-            <Label htmlFor="client">Client Name</Label>
+          <FormField id="client" label="Client Name">
             <Input
               id="client"
               value={client}
@@ -112,94 +97,34 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
               placeholder="Enter client name"
               required
             />
-          </div>
+          </FormField>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="developer">Developer in Charge</Label>
-              <Select
-                value={developer}
-                onValueChange={setDeveloper}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select developer" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Unassigned">Unassigned</SelectItem>
-                  {isLoading ? (
-                    <SelectItem disabled value="loading">Loading employees...</SelectItem>
-                  ) : (
-                    employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.full_name}>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          {employee.full_name}
-                        </div>
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            <EmployeeSelect
+              id="developer"
+              label="Developer in Charge"
+              value={developer}
+              onChange={setDeveloper}
+              defaultOption="Unassigned"
+              defaultLabel="Unassigned"
+            />
             
-            <div className="space-y-2">
-              <Label htmlFor="manager">Manager in Charge</Label>
-              <Select
-                value={manager}
-                onValueChange={setManager}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select manager" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Unassigned">Unassigned</SelectItem>
-                  {isLoading ? (
-                    <SelectItem disabled value="loading">Loading employees...</SelectItem>
-                  ) : (
-                    employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.full_name}>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          {employee.full_name}
-                        </div>
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            <EmployeeSelect
+              id="manager"
+              label="Manager in Charge"
+              value={manager}
+              onChange={setManager}
+              defaultOption="Unassigned"
+              defaultLabel="Unassigned"
+            />
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="status">Project Status</Label>
-            <Select
-              value={status}
-              onValueChange={(value) => setStatus(value as 'active' | 'completed' | 'on-hold' | 'inactive')}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="on-hold">On Hold</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <StatusSelect value={status} onChange={setStatus} />
           
-          <DialogFooter className="pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">
-              Create Project
-            </Button>
-          </DialogFooter>
+          <FormActions 
+            onCancel={() => onOpenChange(false)} 
+            submitLabel="Create Project" 
+          />
         </form>
       </DialogContent>
     </Dialog>
