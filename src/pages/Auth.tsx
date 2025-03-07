@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ const Auth = () => {
   // Reset loading state when auth state changes
   useEffect(() => {
     if (!authLoading) {
+      console.log("Auth loading state changed to:", authLoading);
       setIsLoading(false);
     }
   }, [authLoading]);
@@ -33,6 +34,7 @@ const Auth = () => {
     const cleanupAuth = async () => {
       if (!authLoading) {
         try {
+          console.log("Signing out existing user on auth page...");
           await signOut(false); // Pass false to avoid navigation
           console.log('Signed out existing user on auth page');
         } catch (error) {
@@ -42,7 +44,7 @@ const Auth = () => {
     };
     
     cleanupAuth();
-  }, [authLoading, signOut]);
+  }, []);
 
   // Redirect if user is already authenticated
   useEffect(() => {
@@ -54,10 +56,12 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Starting sign in process...");
     setIsLoading(true);
     try {
       await signIn(email, password);
       // We don't need to navigate here as the useEffect will handle it
+      console.log("Sign in function completed successfully");
     } catch (error) {
       console.error('Sign in error:', error);
       setIsLoading(false); // Make sure to reset loading state on error
@@ -66,10 +70,12 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Starting sign up process...");
     setIsLoading(true);
     try {
       await signUp(email, password, fullName);
       // We don't need to navigate here as the useEffect will handle it
+      console.log("Sign up function completed successfully");
     } catch (error) {
       console.error('Sign up error:', error);
       setIsLoading(false); // Make sure to reset loading state on error
@@ -132,8 +138,8 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Sign in"}
+                  <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
+                    {isLoading || authLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </CardFooter>
               </form>
@@ -184,8 +190,8 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Create account"}
+                  <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
+                    {isLoading || authLoading ? "Creating account..." : "Create account"}
                   </Button>
                 </CardFooter>
               </form>

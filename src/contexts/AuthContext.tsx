@@ -116,9 +116,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message,
         variant: "destructive",
       });
+      setLoading(false); // Only reset loading on error as success will trigger auth state change
       throw error;
-    } finally {
-      setLoading(false); // Ensure loading state is reset regardless of outcome
     }
   };
 
@@ -145,7 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message,
         variant: "destructive",
       });
-      setLoading(false); // Only reset loading on error, as success will trigger auth state change
+      setLoading(false); // Only reset loading on error as success will trigger auth state change
       throw error;
     }
   };
@@ -153,8 +152,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async (navigateAfterSignOut = true) => {
     try {
       setLoading(true);
-      setUser(null);
-      setSession(null);
       
       try {
         const { error } = await supabase.auth.signOut();
@@ -165,6 +162,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error: any) {
         console.error("Error during sign out:", error);
       }
+      
+      setUser(null);
+      setSession(null);
       
       if (navigateAfterSignOut) {
         toast({
