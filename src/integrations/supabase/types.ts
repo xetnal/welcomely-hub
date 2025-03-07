@@ -183,7 +183,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      ping_db: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       project_stage:

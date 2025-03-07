@@ -25,7 +25,8 @@ const Index = () => {
 
   useEffect(() => {
     console.log('Index component mounted, checking Supabase connection...');
-    console.log('Supabase client URL:', supabase.supabaseUrl);
+    // Don't use protected property supabaseUrl
+    console.log('Supabase client initialized:', !!supabase);
     
     // Check Supabase connection
     checkSupabaseConnection();

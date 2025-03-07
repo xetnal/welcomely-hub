@@ -18,12 +18,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Add a function to test connection (we'll create this on the DB side)
 // Check if the supabase client is working
-supabase.rpc('ping_db').then(({ data, error }) => {
-  if (error) {
-    console.error('Supabase client initialization error (in ping test):', error);
-  } else {
-    console.log('Supabase client initialized successfully:', data);
-  }
-}).catch(err => {
-  console.error('Exception in Supabase ping test:', err);
-});
+supabase.rpc('ping_db')
+  .then(({ data, error }) => {
+    if (error) {
+      console.error('Supabase client initialization error (in ping test):', error);
+    } else {
+      console.log('Supabase client initialized successfully:', data);
+    }
+  })
+  .catch(err => {
+    console.error('Exception in Supabase ping test:', err);
+  });
