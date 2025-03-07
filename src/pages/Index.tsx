@@ -20,13 +20,15 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [fetchTimedOut, setFetchTimedOut] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const { user } = useAuth();
 
   useEffect(() => {
     console.log('Index component mounted, checking Supabase connection...');
+    console.log('Supabase client URL:', supabase.supabaseUrl);
+    
     // Check Supabase connection
     checkSupabaseConnection();
-    fetchProjects();
     
     // Set a timeout to show "no projects" message if fetch takes too long
     const timeoutId = setTimeout(() => {
@@ -42,20 +44,53 @@ const Index = () => {
 
   const checkSupabaseConnection = async () => {
     console.log('Testing Supabase connection...');
+    setConnectionStatus('checking');
     
     try {
-      // Simple ping to check connection
-      const { data, error } = await supabase.from('projects').select('count()', { count: 'exact', head: true });
+      console.log('Making API request to Supabase...');
+      
+      // Try a very simple query first to test the connection
+      const { data: pingData, error: pingError } = await supabase.rpc('ping_db');
+      
+      if (pingError) {
+        console.error('Ping DB function failed:', pingError);
+        // If ping fails, try the count query as a backup
+        tryCountQuery();
+      } else {
+        console.log('Ping successful:', pingData);
+        setConnectionStatus('connected');
+        fetchProjects();
+      }
+    } catch (error: any) {
+      console.error('Unexpected error in connection test:', error);
+      // If an exception occurred, try the count query as a backup
+      tryCountQuery();
+    }
+  };
+  
+  const tryCountQuery = async () => {
+    try {
+      console.log('Trying count query as fallback...');
+      // Simple count query to check connection
+      const { count, error } = await supabase
+        .from('projects')
+        .select('*', { count: 'exact', head: true });
       
       if (error) {
         console.error('Supabase connection test failed:', error);
-        setFetchError(`Connection error: ${error.message}`);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        setConnectionStatus('error');
+        setFetchError(`Connection error: ${error.message} (${error.code})`);
         toast.error(`Supabase connection error: ${error.message}`);
       } else {
-        console.log('Supabase connection successful');
+        console.log('Count query successful, projects count:', count);
+        setConnectionStatus('connected');
+        fetchProjects();
       }
     } catch (error: any) {
-      console.error('Unexpected error testing Supabase connection:', error);
+      console.error('Unexpected error in count query:', error);
+      console.error('Error object:', JSON.stringify(error, null, 2));
+      setConnectionStatus('error');
       setFetchError(`Unexpected connection error: ${error.message}`);
       toast.error(`Connection error: ${error.message}`);
     }
@@ -68,7 +103,26 @@ const Index = () => {
       setFetchError(null);
       console.log('Fetching all projects...');
       
+      // Try a simpler query first
+      try {
+        console.log('Testing with a simple query first...');
+        const { data: testData, error: testError } = await supabase
+          .from('projects')
+          .select('id')
+          .limit(1);
+          
+        if (testError) {
+          console.error('Simple test query failed:', testError);
+          throw testError;
+        }
+        
+        console.log('Simple test query succeeded:', testData);
+      } catch (testError: any) {
+        console.error('Test query error:', testError);
+      }
+      
       // First, let's check if the projects table exists and has data
+      console.log('Checking project count...');
       const { count, error: countError } = await supabase
         .from('projects')
         .select('*', { count: 'exact', head: true });
@@ -77,7 +131,8 @@ const Index = () => {
       
       if (countError) {
         console.error('Error checking project count:', countError);
-        setFetchError(`Count error: ${countError.message}`);
+        console.error('Count error details:', JSON.stringify(countError, null, 2));
+        setFetchError(`Count error: ${countError.message} (${countError.code})`);
         toast.error(`Error checking project count: ${countError.message}`);
         throw countError;
       }
@@ -219,16 +274,33 @@ const Index = () => {
           />
         </div>
         
+        {connectionStatus === 'checking' && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-600">
+            <div className="flex items-center">
+              <span className="mr-2 animate-spin">⟳</span>
+              <p>Testing connection to Supabase...</p>
+            </div>
+          </div>
+        )}
+        
         {fetchError && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600">
             <p className="font-medium">Database Error</p>
             <p className="text-sm">{fetchError}</p>
-            <button 
-              onClick={fetchProjects} 
-              className="mt-2 text-sm bg-red-100 px-3 py-1 rounded hover:bg-red-200"
-            >
-              Retry
-            </button>
+            <div className="mt-2 space-x-2">
+              <button 
+                onClick={checkSupabaseConnection} 
+                className="text-sm bg-red-100 px-3 py-1 rounded hover:bg-red-200"
+              >
+                Test Connection
+              </button>
+              <button 
+                onClick={fetchProjects} 
+                className="text-sm bg-red-100 px-3 py-1 rounded hover:bg-red-200"
+              >
+                Retry Fetch
+              </button>
+            </div>
           </div>
         )}
         
