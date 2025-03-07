@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PageTransition from '@/components/PageTransition';
 import { Project } from '@/lib/types';
 import AddProjectModal from '@/components/AddProjectModal';
-import { supabase, fetchProjects as supabaseFetchProjects } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -26,6 +26,14 @@ const Dashboard = () => {
   useEffect(() => {
     console.log('Dashboard component mounted, user status:', user ? 'logged in' : 'not logged in');
     
+    const checkConnection = async () => {
+      await checkSupabaseConnection();
+      
+      if (connectionStatus === 'connected' || connectionStatus === 'checking') {
+        fetchProjects();
+      }
+    };
+    
     // Set a timeout to show "no projects" message if fetch takes too long
     const timeoutId = setTimeout(() => {
       if (loading && projects.length === 0) {
@@ -35,19 +43,10 @@ const Dashboard = () => {
       }
     }, 5000);
     
-    // Check connection and fetch projects
-    checkSupabaseConnection();
+    checkConnection();
     
     return () => clearTimeout(timeoutId);
-  }, []);
-
-  // Check if we should refetch projects when user changes
-  useEffect(() => {
-    if (connectionStatus === 'connected') {
-      console.log('Connection established, fetching projects...');
-      fetchProjects();
-    }
-  }, [user, connectionStatus]);
+  }, [user]);
 
   const checkSupabaseConnection = async () => {
     console.log('Testing Supabase connection...');
@@ -64,24 +63,22 @@ const Dashboard = () => {
         setConnectionStatus('error');
         setFetchError(`Connection error: ${error.message}`);
         toast.error(`Database connection error: ${error.message}`);
+        return false;
       } else {
         console.log('Connection test successful');
         setConnectionStatus('connected');
+        return true;
       }
     } catch (error: any) {
       console.error('Unexpected error in connection test:', error);
       setConnectionStatus('error');
       setFetchError(`Unexpected error: ${error.message}`);
       toast.error(`Connection error: ${error.message}`);
+      return false;
     }
   };
 
   const fetchProjects = async () => {
-    if (connectionStatus !== 'connected') {
-      console.log('Not fetching projects because connection is not established');
-      return;
-    }
-    
     try {
       setLoading(true);
       setFetchTimedOut(false);
@@ -100,24 +97,29 @@ const Dashboard = () => {
       
       console.log('Projects fetched successfully:', data);
       
-      // Transform the data to match our Project type
-      const transformedProjects: Project[] = data.map(project => ({
-        id: project.id,
-        name: project.name,
-        client: project.client,
-        developer: project.developer,
-        manager: project.manager || null,
-        startDate: new Date(project.start_date),
-        endDate: new Date(project.end_date),
-        status: project.status,
-        description: project.description,
-        tasks: [],
-        completedStages: project.completed_stages || [],
-        user_id: project.user_id
-      }));
+      if (data && data.length > 0) {
+        // Transform the data to match our Project type
+        const transformedProjects: Project[] = data.map(project => ({
+          id: project.id,
+          name: project.name,
+          client: project.client,
+          developer: project.developer,
+          manager: project.manager || null,
+          startDate: new Date(project.start_date),
+          endDate: new Date(project.end_date),
+          status: project.status,
+          description: project.description,
+          tasks: [],
+          completedStages: project.completed_stages || [],
+          user_id: project.user_id
+        }));
 
-      console.log('Setting projects state with', transformedProjects.length, 'projects');
-      setProjects(transformedProjects);
+        console.log('Setting projects state with', transformedProjects.length, 'projects');
+        setProjects(transformedProjects);
+      } else {
+        console.log('No projects found');
+        setProjects([]);
+      }
     } catch (error: any) {
       console.error('Error fetching projects:', error);
       setFetchError(`Error: ${error.message}`);
