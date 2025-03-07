@@ -1,19 +1,21 @@
 
 import React from 'react';
-import { Loader2, WifiOff, AlertCircle, CheckCircle, RefreshCw, Database } from 'lucide-react';
+import { Loader2, WifiOff, AlertCircle, CheckCircle, RefreshCw, Database, ExternalLink } from 'lucide-react';
 
 interface ConnectionStatusProps {
   status: 'checking' | 'connected' | 'error';
   error: string | null;
   onRetryConnection: () => void;
   onRetryFetch: () => void;
+  onTestDirectRequest: () => void;
 }
 
 const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   status,
   error,
   onRetryConnection,
-  onRetryFetch
+  onRetryFetch,
+  onTestDirectRequest
 }) => {
   if (status === 'checking') {
     return (
@@ -72,7 +74,7 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           )}
         </p>
         
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap gap-3">
           <button 
             onClick={onRetryConnection} 
             className="flex items-center text-sm bg-red-100 px-3 py-1.5 rounded hover:bg-red-200 transition-colors"
@@ -86,6 +88,13 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           >
             <RefreshCw className="h-4 w-4 mr-1.5" />
             Refresh Data
+          </button>
+          <button 
+            onClick={onTestDirectRequest} 
+            className="flex items-center text-sm bg-red-100 px-3 py-1.5 rounded hover:bg-red-200 transition-colors"
+          >
+            <ExternalLink className="h-4 w-4 mr-1.5" />
+            Test Direct API
           </button>
         </div>
       </div>

@@ -24,7 +24,8 @@ const Dashboard = () => {
     connectionStatus,
     addProject,
     refreshProjects,
-    checkConnection
+    checkConnection,
+    testDirectAPIRequest
   } = useProjects();
 
   const filteredProjects = projects.filter(project => 
@@ -51,6 +52,7 @@ const Dashboard = () => {
           error={fetchError}
           onRetryConnection={checkConnection}
           onRetryFetch={refreshProjects}
+          onTestDirectRequest={testDirectAPIRequest}
         />
         
         <ProjectList 

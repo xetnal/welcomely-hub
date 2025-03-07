@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Project } from '@/lib/types';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, testDirectRequest } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -89,7 +89,7 @@ export const useProjects = () => {
           try {
             const response = await fetch('https://ojleksibqzqzjsjlfmpu.supabase.co/rest/v1/', {
               headers: {
-                'apikey': supabase.supabaseKey || '',
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qbGVrc2licXpxempzamxmbXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzMTQyOTUsImV4cCI6MjA1Njg5MDI5NX0.YEjRvFGoxVk0Eg0qSUTPQv2eAq5BQbNB588xp5254hM',
                 'Content-Type': 'application/json'
               }
             });
@@ -131,6 +131,22 @@ export const useProjects = () => {
       setConnectionStatus('error');
       setFetchError(`Unexpected error: ${error.message || 'Unknown error'}`);
       toast.error(`Connection error: ${error.message || 'Unknown error'}`);
+      return false;
+    }
+  };
+
+  const testDirectAPIRequest = async () => {
+    setConnectionStatus('checking');
+    const result = await testDirectRequest();
+    if (result.success) {
+      setConnectionStatus('connected');
+      setFetchError(null);
+      toast.success('Direct API connection successful');
+      return true;
+    } else {
+      setConnectionStatus('error');
+      setFetchError(`Direct API error: ${result.message}`);
+      toast.error(`Direct API error: ${result.message}`);
       return false;
     }
   };
@@ -264,6 +280,7 @@ export const useProjects = () => {
     connectionStatus,
     addProject,
     refreshProjects: fetchProjects,
-    checkConnection: checkSupabaseConnection
+    checkConnection: checkSupabaseConnection,
+    testDirectAPIRequest
   };
 };
