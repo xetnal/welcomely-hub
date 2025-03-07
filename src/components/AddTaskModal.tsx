@@ -1,6 +1,4 @@
-
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,13 +75,6 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-background">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">Add New Task</DialogTitle>
-          <Button 
-            className="absolute right-4 top-4 p-1 h-auto rounded-full" 
-            variant="ghost" 
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6 pt-2">
