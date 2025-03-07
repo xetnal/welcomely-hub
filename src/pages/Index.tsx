@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PageTransition from '@/components/PageTransition';
 import { Project } from '@/lib/types';
@@ -107,20 +108,19 @@ const Index = () => {
       };
       
       console.log("Data being sent to Supabase:", projectData);
-
-      // For debugging purposes, let's log more information about the supabase client
       console.log("Supabase client setup:", !!supabase);
       
-      // Attempt the insert operation with better error handling
-      const { data, error } = await supabase
+      // Try simpler insert operation first without select
+      console.log("Attempting insert operation...");
+      const insertResult = await supabase
         .from('projects')
         .insert(projectData);
-        
-      console.log("Insert operation completed");
       
-      if (error) {
-        console.error("Database error:", error);
-        throw error;
+      console.log("Insert result:", insertResult);
+      
+      if (insertResult.error) {
+        console.error("Database insertion error:", insertResult.error);
+        throw insertResult.error;
       }
       
       console.log("Project created successfully - refreshing projects");
