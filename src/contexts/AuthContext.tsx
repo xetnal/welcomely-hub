@@ -134,33 +134,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Attempting to sign out");
       setLoading(true);
       
-      // First clear local state before calling supabase signOut
-      // This prevents the auth state from being temporarily restored by the onAuthStateChange listener
+      // First invalidate the session on the server side
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.warn("Supabase sign out error:", error);
+        // Even with an error, we'll continue with local logout
+      }
+      
+      // Clear local state after server-side logout
       setUser(null);
       setSession(null);
       
-      // Call supabase signOut and handle any errors
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.warn("Supabase sign out error:", error);
-      }
-      
-      // Show success message and force navigation
       console.log("Sign out successful");
       toast.success("Signed out successfully");
       
-      // Force navigation with setTimeout to ensure it happens after state updates
+      // Force navigation with timeout to ensure it happens after state updates
+      // Use a slightly longer timeout to ensure the auth state change event has fired
       setTimeout(() => {
         navigate('/auth', { replace: true });
-      }, 0);
+      }, 100);
+      
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast.error(`Error signing out: ${error.message}`);
       
-      // Even on error, try to navigate to auth page
+      // Even on error, clear local state and try to navigate to auth page
+      setUser(null);
+      setSession(null);
       setTimeout(() => {
         navigate('/auth', { replace: true });
-      }, 0);
+      }, 100);
     } finally {
       setLoading(false);
     }
