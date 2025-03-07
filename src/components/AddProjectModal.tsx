@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -33,7 +34,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const [client, setClient] = useState('');
   const [developer, setDeveloper] = useState('Unassigned');
   const [manager, setManager] = useState('Unassigned');
-  const [status, setStatus] = useState<'active' | 'completed' | 'on-hold' | 'inactive'>('inactive');
+  const [status, setStatus] = useState<'active' | 'completed' | 'on-hold'>('active');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,19 +48,16 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       toast.error('Please enter a client name');
       return;
     }
-
-    // Generate a unique ID using timestamp + random string
-    const uniqueId = `p-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     const newProject: Project = {
-      id: uniqueId,
+      id: '', // This will be set by the database
       name,
       client,
       developer: developer === 'Unassigned' ? 'Unassigned' : developer,
-      manager: manager === 'Unassigned' ? undefined : manager, // Only include if not Unassigned
+      manager: manager === 'Unassigned' ? undefined : manager,
       startDate: new Date(),
-      endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)), // Default 3 months duration
-      status: status === 'inactive' ? 'on-hold' : status, // Map 'inactive' to 'on-hold' as per type definition
+      endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+      status,
       tasks: [],
       description: `Project for ${client}`
     };
@@ -67,7 +65,6 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
     onAddProject(newProject);
     resetForm();
     onOpenChange(false);
-    toast.success('Project created successfully');
   };
 
   const resetForm = () => {
@@ -75,7 +72,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
     setClient('');
     setDeveloper('Unassigned');
     setManager('Unassigned');
-    setStatus('inactive');
+    setStatus('active');
   };
 
   return (
@@ -160,7 +157,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
             <Label htmlFor="status">Project Status</Label>
             <Select
               value={status}
-              onValueChange={(value) => setStatus(value as 'active' | 'completed' | 'on-hold' | 'inactive')}
+              onValueChange={(value) => setStatus(value as 'active' | 'completed' | 'on-hold')}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
@@ -169,7 +166,6 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="on-hold">On Hold</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>

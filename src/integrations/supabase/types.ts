@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      comments: {
+        Row: {
+          author: string
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          author: string
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          author?: string
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -36,6 +71,113 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          client: string
+          completed_stages:
+            | Database["public"]["Enums"]["project_stage"][]
+            | null
+          created_at: string
+          description: string | null
+          developer: string
+          end_date: string
+          id: string
+          manager: string | null
+          name: string
+          start_date: string
+          status: Database["public"]["Enums"]["project_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client: string
+          completed_stages?:
+            | Database["public"]["Enums"]["project_stage"][]
+            | null
+          created_at?: string
+          description?: string | null
+          developer: string
+          end_date?: string
+          id?: string
+          manager?: string | null
+          name: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client?: string
+          completed_stages?:
+            | Database["public"]["Enums"]["project_stage"][]
+            | null
+          created_at?: string
+          description?: string | null
+          developer?: string
+          end_date?: string
+          id?: string
+          manager?: string | null
+          name?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assignee: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_client_task: boolean | null
+          priority: Database["public"]["Enums"]["task_priority"]
+          project_id: string
+          stage: Database["public"]["Enums"]["project_stage"]
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assignee?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_client_task?: boolean | null
+          priority?: Database["public"]["Enums"]["task_priority"]
+          project_id: string
+          stage: Database["public"]["Enums"]["project_stage"]
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assignee?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_client_task?: boolean | null
+          priority?: Database["public"]["Enums"]["task_priority"]
+          project_id?: string
+          stage?: Database["public"]["Enums"]["project_stage"]
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -44,6 +186,22 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      project_stage:
+        | "Preparation"
+        | "Analysis"
+        | "Design"
+        | "Development"
+        | "Testing"
+        | "UAT"
+        | "Go Live"
+      project_status: "active" | "completed" | "on-hold"
+      task_priority: "low" | "medium" | "high" | "urgent"
+      task_status:
+        | "Backlog"
+        | "In Progress"
+        | "Blocked"
+        | "In Review"
+        | "Completed"
       user_role: "developer" | "manager" | "client" | "admin"
     }
     CompositeTypes: {

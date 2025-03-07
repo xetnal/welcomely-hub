@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Search, Plus, Filter } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
@@ -9,85 +9,98 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import AddProjectModal from '@/components/AddProjectModal';
-
-const mockProjects: Project[] = [
-  {
-    id: '1',
-    name: 'Website Redesign',
-    client: 'Acme Corporation',
-    developer: 'Jane Smith',
-    startDate: new Date(2023, 7, 15),
-    endDate: new Date(2023, 9, 30),
-    status: 'active',
-    description: 'Complete website redesign with new branding, improved UX, and mobile-first approach.',
-    tasks: []
-  },
-  {
-    id: '2',
-    name: 'Mobile App Development',
-    client: 'Global Tech',
-    developer: 'John Doe',
-    startDate: new Date(2023, 6, 1),
-    endDate: new Date(2023, 11, 15),
-    status: 'active',
-    description: 'Cross-platform mobile app for iOS and Android with customer portal integration.',
-    tasks: []
-  },
-  {
-    id: '3',
-    name: 'E-commerce Platform',
-    client: 'Fashion Boutique',
-    developer: 'Alex Johnson',
-    startDate: new Date(2023, 5, 10),
-    endDate: new Date(2023, 8, 20),
-    status: 'on-hold',
-    description: 'Custom e-commerce solution with inventory management and payment gateway integration.',
-    tasks: []
-  },
-  {
-    id: '4',
-    name: 'CRM Integration',
-    client: 'Sales Pro',
-    developer: 'Emily Chen',
-    startDate: new Date(2023, 8, 5),
-    endDate: new Date(2024, 1, 15),
-    status: 'active',
-    description: 'Integration of the existing CRM system with new marketing automation tools.',
-    tasks: []
-  },
-  {
-    id: '5',
-    name: 'Business Analytics Dashboard',
-    client: 'Data Insights Inc.',
-    developer: 'Michael Brown',
-    startDate: new Date(2023, 4, 20),
-    endDate: new Date(2023, 7, 10),
-    status: 'completed',
-    description: 'Interactive dashboard for business analytics with real-time data visualization.',
-    tasks: []
-  },
-  {
-    id: '6',
-    name: 'Cloud Migration',
-    client: 'Legacy Systems Co.',
-    developer: 'Sarah Williams',
-    startDate: new Date(2023, 9, 1),
-    endDate: new Date(2024, 2, 28),
-    status: 'active',
-    description: 'Migration of legacy systems to cloud infrastructure with minimal downtime.',
-    tasks: []
-  }
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Index = () => {
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  const handleAddProject = (newProject: Project) => {
-    // Add the new project to the beginning of the projects array
-    setProjects((prevProjects) => [newProject, ...prevProjects]);
-    console.log("New project created:", newProject); // Add logging for debugging
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform the data to match our Project type
+      const transformedProjects: Project[] = data.map(project => ({
+        id: project.id,
+        name: project.name,
+        client: project.client,
+        developer: project.developer,
+        manager: project.manager || undefined,
+        startDate: new Date(project.start_date),
+        endDate: new Date(project.end_date),
+        status: project.status,
+        description: project.description,
+        tasks: [],
+        completedStages: project.completed_stages || []
+      }));
+
+      setProjects(transformedProjects);
+    } catch (error: any) {
+      toast.error(`Error fetching projects: ${error.message}`);
+      console.error('Error fetching projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddProject = async (newProject: Project) => {
+    try {
+      // Transform Project to database format
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({
+          name: newProject.name,
+          client: newProject.client,
+          developer: newProject.developer,
+          manager: newProject.manager,
+          description: newProject.description || `Project for ${newProject.client}`,
+          start_date: newProject.startDate.toISOString(),
+          end_date: newProject.endDate.toISOString(),
+          status: newProject.status,
+          user_id: user?.id,
+          completed_stages: []
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Add new project to state with correct format
+      const addedProject: Project = {
+        id: data.id,
+        name: data.name,
+        client: data.client,
+        developer: data.developer,
+        manager: data.manager || undefined,
+        startDate: new Date(data.start_date),
+        endDate: new Date(data.end_date),
+        status: data.status,
+        description: data.description,
+        tasks: [],
+        completedStages: data.completed_stages || []
+      };
+      
+      setProjects(prevProjects => [addedProject, ...prevProjects]);
+      toast.success('Project created successfully');
+    } catch (error: any) {
+      toast.error(`Error creating project: ${error.message}`);
+      console.error('Error creating project:', error);
+    }
   };
 
   const filteredProjects = projects.filter(project => 
@@ -147,11 +160,28 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project, index) => (
-            <ProjectCard key={project.id} project={project} index={index} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : filteredProjects.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredProjects.map((project, index) => (
+              <ProjectCard key={project.id} project={project} index={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center p-12 bg-muted/20 rounded-lg border border-dashed">
+            <h3 className="text-lg font-medium mb-2">No projects found</h3>
+            <p className="text-muted-foreground mb-4">
+              {searchQuery ? 'No projects match your search criteria' : 'You have not created any projects yet'}
+            </p>
+            <Button onClick={() => setIsAddProjectModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create your first project
+            </Button>
+          </div>
+        )}
       </PageTransition>
 
       <AddProjectModal
