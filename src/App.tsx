@@ -19,6 +19,10 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/project/:projectId" element={<ProjectDetail />} />
+          {/* Placeholder routes for menu items */}
+          <Route path="/clients" element={<AdminUsers />} />
+          <Route path="/analytics" element={<AdminUsers />} />
+          <Route path="/messages" element={<AdminUsers />} />
         </Routes>
         <Toaster />
       </AuthProvider>

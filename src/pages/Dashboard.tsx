@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import ProjectHeader from '@/components/dashboard/ProjectHeader';
 import ProjectSearch from '@/components/dashboard/ProjectSearch';
 import ProjectList from '@/components/dashboard/ProjectList';
+import Navbar from '@/components/Navbar';
 
 const Dashboard = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -42,8 +43,8 @@ const Dashboard = () => {
 
   // Check if we should refetch projects when user changes
   useEffect(() => {
-    if (user && connectionStatus === 'connected') {
-      console.log('User changed, refetching projects...');
+    if (connectionStatus === 'connected') {
+      console.log('Connection established, fetching projects...');
       fetchProjects();
     }
   }, [user, connectionStatus]);
@@ -66,7 +67,6 @@ const Dashboard = () => {
       } else {
         console.log('Connection test successful');
         setConnectionStatus('connected');
-        fetchProjects();
       }
     } catch (error: any) {
       console.error('Unexpected error in connection test:', error);
@@ -88,13 +88,20 @@ const Dashboard = () => {
       setFetchError(null);
       console.log('Fetching projects...');
       
-      // Use the fetchProjects function from client.ts
-      const projectData = await supabaseFetchProjects();
+      // Directly query the projects table
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      console.log('Projects fetched, transforming data');
+      if (error) {
+        throw error;
+      }
+      
+      console.log('Projects fetched successfully:', data);
       
       // Transform the data to match our Project type
-      const transformedProjects: Project[] = projectData.map(project => ({
+      const transformedProjects: Project[] = data.map(project => ({
         id: project.id,
         name: project.name,
         client: project.client,
@@ -175,60 +182,63 @@ const Dashboard = () => {
   );
 
   return (
-    <PageTransition className="flex-1 container py-8">
-      <div className="flex items-center justify-between mb-8">
-        <ProjectHeader />
-        <ProjectSearch 
-          searchQuery={searchQuery} 
-          setSearchQuery={setSearchQuery}
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <PageTransition className="flex-1 container py-8">
+        <div className="flex items-center justify-between mb-8">
+          <ProjectHeader />
+          <ProjectSearch 
+            searchQuery={searchQuery} 
+            setSearchQuery={setSearchQuery}
+            onAddProject={() => setIsAddProjectModalOpen(true)}
+          />
+        </div>
+        
+        {connectionStatus === 'checking' && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-600">
+            <div className="flex items-center">
+              <span className="mr-2 animate-spin">⟳</span>
+              <p>Testing connection to Supabase...</p>
+            </div>
+          </div>
+        )}
+        
+        {fetchError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600">
+            <p className="font-medium">Database Error</p>
+            <p className="text-sm">{fetchError}</p>
+            <div className="mt-2 space-x-2">
+              <button 
+                onClick={checkSupabaseConnection} 
+                className="text-sm bg-red-100 px-3 py-1 rounded hover:bg-red-200"
+              >
+                Test Connection
+              </button>
+              <button 
+                onClick={fetchProjects} 
+                className="text-sm bg-red-100 px-3 py-1 rounded hover:bg-red-200"
+              >
+                Retry Fetch
+              </button>
+            </div>
+          </div>
+        )}
+        
+        <ProjectList 
+          projects={filteredProjects}
+          loading={loading}
+          fetchTimedOut={fetchTimedOut}
+          searchQuery={searchQuery}
           onAddProject={() => setIsAddProjectModalOpen(true)}
         />
-      </div>
-      
-      {connectionStatus === 'checking' && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-600">
-          <div className="flex items-center">
-            <span className="mr-2 animate-spin">⟳</span>
-            <p>Testing connection to Supabase...</p>
-          </div>
-        </div>
-      )}
-      
-      {fetchError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600">
-          <p className="font-medium">Database Error</p>
-          <p className="text-sm">{fetchError}</p>
-          <div className="mt-2 space-x-2">
-            <button 
-              onClick={checkSupabaseConnection} 
-              className="text-sm bg-red-100 px-3 py-1 rounded hover:bg-red-200"
-            >
-              Test Connection
-            </button>
-            <button 
-              onClick={fetchProjects} 
-              className="text-sm bg-red-100 px-3 py-1 rounded hover:bg-red-200"
-            >
-              Retry Fetch
-            </button>
-          </div>
-        </div>
-      )}
-      
-      <ProjectList 
-        projects={filteredProjects}
-        loading={loading}
-        fetchTimedOut={fetchTimedOut}
-        searchQuery={searchQuery}
-        onAddProject={() => setIsAddProjectModalOpen(true)}
-      />
 
-      <AddProjectModal
-        open={isAddProjectModalOpen}
-        onOpenChange={setIsAddProjectModalOpen}
-        onAddProject={handleAddProject}
-      />
-    </PageTransition>
+        <AddProjectModal
+          open={isAddProjectModalOpen}
+          onOpenChange={setIsAddProjectModalOpen}
+          onAddProject={handleAddProject}
+        />
+      </PageTransition>
+    </div>
   );
 };
 

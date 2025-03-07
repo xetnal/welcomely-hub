@@ -1,96 +1,47 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import Navbar from '@/components/Navbar';
-import { Project } from '@/lib/types';
-import { fetchProjects } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-
-// Import components
-import SectionHeader from '@/components/dashboard/SectionHeader';
-import Dashboard from './Dashboard';
-import ClientList from '@/components/dashboard/ClientList';
+import { Layers, Users, BarChart3, MessageSquare, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Layers, Users, BarChart3 } from 'lucide-react';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("projects");
-  const [clients, setClients] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadClients();
-  }, []);
-
-  const loadClients = async () => {
-    try {
-      setIsLoading(true);
-      // Fetch projects to extract client information
-      const projectData = await fetchProjects();
-      
-      // Extract unique clients from projects
-      const uniqueClients = [...new Set(projectData.map(project => project.client))];
-      setClients(uniqueClients);
-    } catch (error: any) {
-      console.error('Error fetching clients:', error);
-      toast.error(`Error loading clients: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const menuItems = [
+    { title: 'Projects Dashboard', description: 'Manage and monitor all your projects', icon: <Layers className="h-8 w-8" />, path: '/dashboard' },
+    { title: 'Client Management', description: 'View and manage your clients', icon: <Users className="h-8 w-8" />, path: '/clients' },
+    { title: 'Analytics', description: 'Project performance and statistics', icon: <BarChart3 className="h-8 w-8" />, path: '/analytics' },
+    { title: 'Messages', description: 'Communication with team and clients', icon: <MessageSquare className="h-8 w-8" />, path: '/messages' },
+    { title: 'Admin Settings', description: 'User management and system settings', icon: <Settings className="h-8 w-8" />, path: '/admin/users' },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <PageTransition className="flex-1 container py-8">
-        <Tabs defaultValue="projects" className="space-y-6" onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
-              <TabsTrigger value="projects" className="flex items-center gap-2">
-                <Layers className="h-4 w-4" />
-                <span className="hidden sm:inline">Projects</span>
-              </TabsTrigger>
-              <TabsTrigger value="clients" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Clients</span>
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Analytics</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2">Project Management Dashboard</h1>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Welcome to your central hub for managing projects, clients, and team performance.
+          </p>
+        </div>
 
-          <TabsContent value="projects" className="space-y-6">
-            <Dashboard />
-          </TabsContent>
-
-          <TabsContent value="clients" className="space-y-6">
-            <SectionHeader 
-              title="Client Management" 
-              description="View and manage your clients" 
-            />
-            <ClientList clients={clients} loading={isLoading} />
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <SectionHeader 
-              title="Analytics" 
-              description="Project performance and statistics" 
-            />
-            <div className="text-center p-12 bg-muted/20 rounded-lg border border-dashed">
-              <h3 className="text-lg font-medium mb-2">Analytics Coming Soon</h3>
-              <p className="text-muted-foreground mb-4">
-                We're working on providing detailed analytics for your projects
-              </p>
-              <Button variant="outline">
-                Go to Projects
-              </Button>
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {menuItems.map((item, index) => (
+            <Link to={item.path} key={index} className="block">
+              <div className="glass card-hover rounded-xl p-6 flex flex-col items-center text-center hover:shadow-md transition-all">
+                <div className="bg-primary/10 p-4 rounded-full mb-4 text-primary">
+                  {item.icon}
+                </div>
+                <h2 className="text-xl font-medium mb-2">{item.title}</h2>
+                <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
+                <Button variant="outline" className="mt-auto w-full">
+                  Open {item.title.split(' ')[0]}
+                </Button>
+              </div>
+            </Link>
+          ))}
+        </div>
       </PageTransition>
     </div>
   );
