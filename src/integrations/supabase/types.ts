@@ -254,9 +254,22 @@ export type Database = {
         }
         Returns: string
       }
+      is_admin: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
       ping_db: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      update_user_role: {
+        Args: {
+          target_user_id: string
+          new_role: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

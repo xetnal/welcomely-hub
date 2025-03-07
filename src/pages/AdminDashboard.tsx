@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Shield, Save, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -105,17 +104,15 @@ const AdminDashboard = () => {
     setSavingChanges(true);
     try {
       const promises = Object.entries(pendingChanges).map(([userId, role]) => {
-        const profileUpdate = supabase
-          .from('profiles')
-          .update({ role })
-          .eq('id', userId);
-          
-        return profileUpdate;
+        return supabase.rpc('update_user_role', { 
+          target_user_id: userId, 
+          new_role: role 
+        });
       });
 
       const results = await Promise.all(promises);
       
-      const errors = results.filter(result => result.error);
+      const errors = results.filter(result => result.error || !result.data);
       if (errors.length > 0) {
         throw new Error(`${errors.length} updates failed`);
       }
