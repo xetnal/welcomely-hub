@@ -98,7 +98,7 @@ const Index = () => {
         name: newProject.name,
         client: newProject.client,
         developer: newProject.developer,
-        manager: newProject.manager,
+        manager: newProject.manager || null, // Ensure null instead of undefined
         description: newProject.description || `Project for ${newProject.client}`,
         start_date: newProject.startDate.toISOString(),
         end_date: newProject.endDate.toISOString(),
@@ -110,24 +110,37 @@ const Index = () => {
       console.log("Data being sent to Supabase:", projectData);
       console.log("Supabase client setup:", !!supabase);
       
-      // Try simpler insert operation first without select
-      console.log("Attempting insert operation...");
-      const insertResult = await supabase
-        .from('projects')
-        .insert(projectData);
-      
-      console.log("Insert result:", insertResult);
-      
-      if (insertResult.error) {
-        console.error("Database insertion error:", insertResult.error);
-        throw insertResult.error;
+      // Wrap the insert operation in try/catch to catch any synchronous errors
+      try {
+        console.log("Attempting insert operation...");
+        
+        // Set a timeout to detect hangs
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Insert operation timed out after 10 seconds")), 10000)
+        );
+        
+        // Race between the actual operation and the timeout
+        const insertResultPromise = supabase
+          .from('projects')
+          .insert(projectData);
+          
+        const result = await Promise.race([insertResultPromise, timeoutPromise]);
+        console.log("Insert operation completed, result:", result);
+        
+        if ('error' in result && result.error) {
+          console.error("Database insertion error:", result.error);
+          throw result.error;
+        }
+        
+        console.log("Project created successfully - refreshing projects");
+        toast.success('Project created successfully');
+        
+        // Refresh projects from database
+        await fetchProjects();
+      } catch (insertError: any) {
+        console.error("Error during insert operation:", insertError);
+        throw new Error(`Insert operation failed: ${insertError.message || 'Unknown error'}`);
       }
-      
-      console.log("Project created successfully - refreshing projects");
-      toast.success('Project created successfully');
-      
-      // Refresh projects from database
-      await fetchProjects();
     } catch (error: any) {
       toast.error(`Error creating project: ${error.message}`);
       console.error('Error creating project:', error);

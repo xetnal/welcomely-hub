@@ -62,13 +62,14 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       name,
       client,
       developer: developer === 'Unassigned' ? 'Unassigned' : developer,
-      manager: manager === 'Unassigned' ? null : manager, // Change undefined to null
+      manager: manager === 'Unassigned' ? null : manager, // Explicitly set to null when unassigned
       startDate: new Date(),
       endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
       status,
       tasks: [],
       description: `Project for ${client}`,
-      user_id: user.id
+      user_id: user.id,
+      completedStages: [] // Ensure this is properly initialized
     };
 
     try {
