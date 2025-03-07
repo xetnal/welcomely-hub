@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import ProjectDetails from "./pages/ProjectDetails";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import AdminDashboard from "./pages/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/project/:id" element={<ProjectDetails />} />
                 <Route path="/reports" element={<Index />} />
                 <Route path="/analytics" element={<Index />} />
+                <Route path="/admin" element={<AdminDashboard />} />
               </Route>
               
               {/* Catch-all route */}

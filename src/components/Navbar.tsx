@@ -1,16 +1,17 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sun, Moon, LogOut, LogIn } from 'lucide-react';
+import { Sun, Moon, LogOut, LogIn, Shield } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { user, signOut, loading } = useAuth();
   const location = useLocation();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for saved theme preference
@@ -26,7 +27,31 @@ const Navbar = () => {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-  }, []);
+
+    // Fetch user role if user is logged in
+    const fetchUserRole = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+            
+          if (error) {
+            console.error('Error fetching user role:', error);
+            return;
+          }
+          
+          setUserRole(data.role);
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+        }
+      }
+    };
+    
+    fetchUserRole();
+  }, [user]);
 
   const toggleDarkMode = () => {
     if (isDarkMode) {
@@ -121,6 +146,17 @@ const Navbar = () => {
               >
                 Analytics
               </Link>
+              {userRole === 'Admin' && (
+                <Link 
+                  to="/admin" 
+                  className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
+                    isActive('/admin') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+                  }`}
+                >
+                  <Shield className="h-4 w-4" />
+                  Admin
+                </Link>
+              )}
             </nav>
           )}
         </div>
