@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Save, AlertCircle } from 'lucide-react';
+import { Shield, Save, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -49,49 +49,51 @@ const AdminDashboard = () => {
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({});
   const [savingChanges, setSavingChanges] = useState(false);
+  const [processingBulkUpdate, setProcessingBulkUpdate] = useState(false);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      // Get current user role
+      const { data: currentUserRoleData, error: currentUserRoleError } = await supabase
+        .rpc('get_user_role', { user_id: user?.id });
+
+      if (currentUserRoleError) {
+        throw currentUserRoleError;
+      }
+
+      setCurrentUserRole(currentUserRoleData);
+      console.log("Current user role:", currentUserRoleData);
+
+      if (currentUserRoleData?.toLowerCase() === 'admin') {
+        // Get all user profiles with email
+        const { data: profilesData, error: profilesError } = await supabase
+          .rpc('get_all_profiles_with_email');
+
+        if (profilesError) {
+          throw profilesError;
+        }
+
+        // Process profiles, ensuring all have a default role
+        const processedProfiles = profilesData.map(profile => ({
+          ...profile,
+          role: profile.role || 'Client' // Default to 'Client' if role is null or empty
+        }));
+
+        setUsers(processedProfiles);
+        console.log("Fetched users:", processedProfiles);
+      } else {
+        toast.error("You don't have admin privileges");
+      }
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+      toast.error(`Failed to load users: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        const { data: currentUserRoleData, error: currentUserRoleError } = await supabase
-          .rpc('get_user_role', { user_id: user?.id });
-
-        if (currentUserRoleError) {
-          throw currentUserRoleError;
-        }
-
-        setCurrentUserRole(currentUserRoleData);
-        console.log("Current user role:", currentUserRoleData);
-
-        if (currentUserRoleData?.toLowerCase() === 'admin') {
-          // Updated call to RPC that includes email information
-          const { data: profilesData, error: profilesError } = await supabase
-            .rpc('get_all_profiles_with_email');
-
-          if (profilesError) {
-            throw profilesError;
-          }
-
-          // Ensure all users have a default role if missing
-          const processedProfiles = profilesData.map(profile => ({
-            ...profile,
-            role: profile.role || 'Client' // Default to 'Client' if role is null or empty
-          }));
-
-          setUsers(processedProfiles);
-          console.log("Fetched users:", processedProfiles);
-        } else {
-          toast.error("You don't have admin privileges");
-        }
-      } catch (error: any) {
-        console.error('Error fetching users:', error);
-        toast.error(`Failed to load users: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (user) {
       fetchUsers();
     }
@@ -115,8 +117,7 @@ const AdminDashboard = () => {
       for (const [userId, role] of Object.entries(pendingChanges)) {
         console.log(`Updating user ${userId} to role ${role}`);
         
-        // Use the updated RPC function which will handle updating the user_roles table
-        // and trigger the update to profiles table via the trigger
+        // Use the RPC function which updates the user_roles table
         const { data, error } = await supabase.rpc('update_user_role', { 
           target_user_id: userId, 
           new_role: role 
@@ -140,11 +141,66 @@ const AdminDashboard = () => {
 
       setPendingChanges({});
       toast.success('User roles updated successfully');
+      
+      // Refresh to ensure we have the latest data
+      fetchUsers();
     } catch (error: any) {
       console.error('Error updating roles:', error);
       toast.error(`Failed to update roles: ${error.message}`);
     } finally {
       setSavingChanges(false);
+    }
+  };
+
+  const updateAllClientsToDevs = async () => {
+    setProcessingBulkUpdate(true);
+    try {
+      // Get all users with 'Client' role
+      const clientUsers = users.filter(user => user.role === 'Client');
+      
+      if (clientUsers.length === 0) {
+        toast.info('No clients to update');
+        return;
+      }
+
+      // Create pending changes for all clients
+      const changes: Record<string, string> = {};
+      clientUsers.forEach(user => {
+        changes[user.id] = 'Developer';
+      });
+
+      // Update roles one by one
+      for (const [userId, role] of Object.entries(changes)) {
+        console.log(`Updating user ${userId} from Client to Developer`);
+        
+        const { data, error } = await supabase.rpc('update_user_role', { 
+          target_user_id: userId, 
+          new_role: role 
+        });
+        
+        if (error) {
+          console.error(`Error updating user role ${userId}:`, error);
+          throw new Error(`Failed to update user ${userId}: ${error.message}`);
+        }
+      }
+
+      // Update local state
+      setUsers(users.map((user) => {
+        if (user.role === 'Client') {
+          return { ...user, role: 'Developer' as any };
+        }
+        return user;
+      }));
+
+      toast.success(`Updated ${clientUsers.length} clients to developers`);
+      
+      // Refresh to ensure we have the latest data
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error in bulk role update:', error);
+      toast.error(`Failed to update client roles: ${error.message}`);
+    } finally {
+      setProcessingBulkUpdate(false);
     }
   };
 
@@ -199,16 +255,28 @@ const AdminDashboard = () => {
               </p>
             </div>
             
-            {Object.keys(pendingChanges).length > 0 && (
+            <div className="flex gap-2">
               <Button 
-                onClick={saveChanges} 
-                disabled={savingChanges}
+                onClick={updateAllClientsToDevs} 
+                disabled={processingBulkUpdate || savingChanges}
+                variant="outline"
                 className="flex items-center gap-1"
               >
-                <Save className="h-4 w-4" />
-                Save Changes
+                <RefreshCw className={`h-4 w-4 ${processingBulkUpdate ? 'animate-spin' : ''}`} />
+                Change All Clients to Developers
               </Button>
-            )}
+              
+              {Object.keys(pendingChanges).length > 0 && (
+                <Button 
+                  onClick={saveChanges} 
+                  disabled={savingChanges}
+                  className="flex items-center gap-1"
+                >
+                  <Save className="h-4 w-4" />
+                  Save Changes
+                </Button>
+              )}
+            </div>
           </div>
           
           <Card>
