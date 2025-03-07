@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -133,6 +134,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Attempting to sign out");
       setLoading(true);
       
+      // Clear all cookies, localStorage and sessionStorage
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
       // Clear local state first - this is the most important part
       setUser(null);
       setSession(null);
@@ -143,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Now attempt to sign out on the server (but we don't need to wait for it)
       try {
         // We don't await this, as we've already changed local state and navigation
-        supabase.auth.signOut().then(({ error }) => {
+        await supabase.auth.signOut({ scope: 'global' }).then(({ error }) => {
           if (error) {
             console.warn("Supabase sign out error:", error);
           } else {

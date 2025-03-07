@@ -31,7 +31,7 @@ const Auth = () => {
   }, [user, loading, location.pathname, from]);
 
   // Only redirect away from auth page if user is authenticated AND we're not in the process of loading
-  if (user && !loading && from !== '/auth') {
+  if (user && !loading) {
     console.log("Redirecting authenticated user from auth page to:", from);
     return <Navigate to={from} replace />;
   }

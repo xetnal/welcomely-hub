@@ -11,15 +11,14 @@ const ProtectedRoute = () => {
     console.log("ProtectedRoute check:", { user: !!user, loading, path: location.pathname });
   }, [user, loading, location.pathname]);
 
+  // If we're loading, show a loading spinner
   if (loading) {
-    // You could return a loading spinner here if needed
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
+  // If there's no user after loading completes, redirect to auth
   if (!user) {
     console.log("No authenticated user, redirecting to /auth");
-    // Redirect to the auth page, but save the current location so we can
-    // redirect back after authentication
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
