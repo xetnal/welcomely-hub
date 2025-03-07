@@ -115,18 +115,8 @@ const AdminDashboard = () => {
       for (const [userId, role] of Object.entries(pendingChanges)) {
         console.log(`Updating user ${userId} to role ${role}`);
         
-        // First, update in the profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ role: role })
-          .eq('id', userId);
-          
-        if (profileError) {
-          console.error(`Error updating profile for user ${userId}:`, profileError);
-          throw new Error(`Failed to update profile for user ${userId}: ${profileError.message}`);
-        }
-
-        // Then update in user_roles table through RPC
+        // Use the updated RPC function which will handle updating the user_roles table
+        // and trigger the update to profiles table via the trigger
         const { data, error } = await supabase.rpc('update_user_role', { 
           target_user_id: userId, 
           new_role: role 
