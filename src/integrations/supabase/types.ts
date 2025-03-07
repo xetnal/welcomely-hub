@@ -236,6 +236,18 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_all_profiles_with_email: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          full_name: string
+          avatar_url: string
+          role: string
+          email: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
       get_auth_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string

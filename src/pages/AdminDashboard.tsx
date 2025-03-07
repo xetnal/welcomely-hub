@@ -65,7 +65,7 @@ const AdminDashboard = () => {
         console.log("Current user role:", currentUserRoleData);
 
         if (currentUserRoleData?.toLowerCase() === 'admin') {
-          // Updated call to RPC that includes email information
+          // Use the new RPC function that includes email information
           const { data: profilesData, error: profilesError } = await supabase
             .rpc('get_all_profiles_with_email');
 
