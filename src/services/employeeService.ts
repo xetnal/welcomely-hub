@@ -31,6 +31,26 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
 
 export const createEmployee = async (userId: string, fullName: string): Promise<Employee | null> => {
   try {
+    console.log("Creating employee with userId:", userId, "fullName:", fullName);
+    
+    // First check if employee already exists to avoid duplicates
+    const { data: existingEmployee, error: checkError } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (checkError) {
+      console.error('Error checking existing employee:', checkError);
+      throw checkError;
+    }
+    
+    if (existingEmployee) {
+      console.log("Employee already exists, returning:", existingEmployee);
+      return existingEmployee;
+    }
+    
+    // Create the employee if it doesn't exist
     const { data, error } = await supabase
       .from('employees')
       .insert([
@@ -44,7 +64,7 @@ export const createEmployee = async (userId: string, fullName: string): Promise<
       throw error;
     }
     
-    console.log("Created employee:", data);
+    console.log("Successfully created employee:", data);
     return data;
   } catch (error: any) {
     console.error('Error creating employee:', error);
@@ -52,4 +72,3 @@ export const createEmployee = async (userId: string, fullName: string): Promise<
     return null;
   }
 };
-

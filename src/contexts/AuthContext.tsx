@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Helper function to create an employee for a user
   const ensureEmployeeExists = async (userId: string, fullName: string) => {
     try {
+      console.log("Ensuring employee exists for user:", userId, fullName);
       // Check if employee already exists for this user
       const { data, error } = await supabase
         .from('employees')
@@ -35,15 +36,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
       
       if (error) {
+        console.error('Error checking if employee exists:', error);
         throw error;
       }
 
       // If employee doesn't exist, create one
       if (!data) {
-        await createEmployee(userId, fullName);
+        console.log("No employee found, creating one for user:", userId);
+        const newEmployee = await createEmployee(userId, fullName);
+        console.log("Employee created:", newEmployee);
+        return newEmployee;
+      } else {
+        console.log("Employee already exists for user:", userId);
+        return data;
       }
     } catch (error) {
       console.error('Error ensuring employee exists:', error);
+      return null;
     }
   };
 
@@ -56,12 +65,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error) {
           console.error("Error getting session:", error);
         }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         // If we have a user, ensure they have an employee record
         if (session?.user) {
           const fullName = session.user.user_metadata?.full_name || 'User';
+          console.log("Session user found, ensuring employee exists:", fullName);
           await ensureEmployeeExists(session.user.id, fullName);
         }
       } catch (error) {
@@ -76,12 +87,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log("Auth state changed, event:", _event);
         setSession(session);
         setUser(session?.user ?? null);
         
         // If we have a user, ensure they have an employee record
         if (session?.user) {
           const fullName = session.user.user_metadata?.full_name || 'User';
+          console.log("Auth change user found, ensuring employee exists:", fullName);
           await ensureEmployeeExists(session.user.id, fullName);
         }
         
@@ -96,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
+      console.log("Signing up user:", email, fullName);
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -106,9 +120,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
+      console.log("User signed up successfully:", data);
+      
       // Create employee record for the new user if we have a user
       if (data.user) {
-        await createEmployee(data.user.id, fullName);
+        console.log("Creating employee for new user:", data.user.id, fullName);
+        const employee = await createEmployee(data.user.id, fullName);
+        console.log("Employee created during signup:", employee);
+      } else {
+        console.warn("No user object returned from signUp");
       }
       
       toast({
@@ -116,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Please check your email for the confirmation link",
       });
     } catch (error: any) {
+      console.error("Error during signup:", error);
       toast({
         title: "Error signing up",
         description: error.message,
