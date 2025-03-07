@@ -79,18 +79,9 @@ const AdminDashboard = () => {
             throw usersError;
           }
 
-          // Get emails for each user
-          const usersWithEmail = await Promise.all(
-            userData.map(async (profile) => {
-              const { data: user } = await supabase.auth.admin.getUserById(profile.id);
-              return {
-                ...profile,
-                email: user?.email || 'Unknown email'
-              };
-            })
-          );
-
-          setUsers(usersWithEmail);
+          // Get emails for users - removed problematic function call
+          // Instead, we'll use what we have
+          setUsers(userData);
         } else {
           // Not an admin, show warning
           toast.error("You don't have admin privileges");
@@ -246,7 +237,7 @@ const AdminDashboard = () => {
                           <span>{user.full_name || 'Unnamed User'}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{user.email || 'No email'}</TableCell>
+                      <TableCell>{user.email || 'No email available'}</TableCell>
                       <TableCell>
                         <Select
                           value={pendingChanges[user.id] || user.role}
