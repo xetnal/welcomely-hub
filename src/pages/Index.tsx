@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { Search, Plus, Filter } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
@@ -8,6 +8,7 @@ import { Project } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
+import AddProjectModal from '@/components/AddProjectModal';
 
 const mockProjects: Project[] = [
   {
@@ -79,6 +80,20 @@ const mockProjects: Project[] = [
 ];
 
 const Index = () => {
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleAddProject = (newProject: Project) => {
+    setProjects((prevProjects) => [newProject, ...prevProjects]);
+  };
+
+  const filteredProjects = projects.filter(project => 
+    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.developer.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -111,6 +126,8 @@ const Index = () => {
                 type="text"
                 placeholder="Search projects..."
                 className="w-full bg-white/80 border pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             
@@ -118,7 +135,10 @@ const Index = () => {
               <Filter className="h-4 w-4" />
             </Button>
             
-            <Button className="flex items-center gap-1">
+            <Button 
+              className="flex items-center gap-1"
+              onClick={() => setIsAddProjectModalOpen(true)}
+            >
               <Plus className="h-4 w-4" />
               <span>New Project</span>
             </Button>
@@ -126,11 +146,17 @@ const Index = () => {
         </div>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {mockProjects.map((project, index) => (
+          {filteredProjects.map((project, index) => (
             <ProjectCard key={project.id} project={project} index={index} />
           ))}
         </div>
       </PageTransition>
+
+      <AddProjectModal
+        open={isAddProjectModalOpen}
+        onOpenChange={setIsAddProjectModalOpen}
+        onAddProject={handleAddProject}
+      />
     </div>
   );
 };

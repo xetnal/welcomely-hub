@@ -44,6 +44,7 @@ export interface Project {
   name: string;
   client: string;
   developer: string;
+  manager?: string;
   startDate: Date;
   endDate: Date;
   status: 'active' | 'completed' | 'on-hold';

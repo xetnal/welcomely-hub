@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Project } from '@/lib/types';
 import { format } from 'date-fns';
-import { CalendarDays, User } from 'lucide-react';
+import { CalendarDays, User, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -62,6 +62,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
               <User className="h-4 w-4 mr-2" />
               <span>{project.developer}</span>
             </div>
+            
+            {project.manager && project.manager !== 'Unassigned' && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Users className="h-4 w-4 mr-2" />
+                <span>{project.manager}</span>
+              </div>
+            )}
             
             <div className="flex items-center text-sm text-muted-foreground">
               <CalendarDays className="h-4 w-4 mr-2" />
