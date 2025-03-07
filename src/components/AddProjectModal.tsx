@@ -49,11 +49,15 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       return;
     }
 
+    // Generate a unique ID using timestamp + random string
+    const uniqueId = `p-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     const newProject: Project = {
-      id: `p${Date.now()}`,
+      id: uniqueId,
       name,
       client,
       developer: developer === 'Unassigned' ? 'Unassigned' : developer,
+      manager: manager === 'Unassigned' ? undefined : manager, // Only include if not Unassigned
       startDate: new Date(),
       endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)), // Default 3 months duration
       status: status === 'inactive' ? 'on-hold' : status, // Map 'inactive' to 'on-hold' as per type definition

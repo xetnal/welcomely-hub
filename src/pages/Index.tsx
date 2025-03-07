@@ -85,7 +85,9 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleAddProject = (newProject: Project) => {
+    // Add the new project to the beginning of the projects array
     setProjects((prevProjects) => [newProject, ...prevProjects]);
+    console.log("New project created:", newProject); // Add logging for debugging
   };
 
   const filteredProjects = projects.filter(project => 
