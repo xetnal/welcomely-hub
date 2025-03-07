@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return () => clearTimeout(timer);
   }, []);
 
-  console.log('ProtectedRoute - auth state:', { user: !!user, loading, authTimeout });
+  console.log('ProtectedRoute - auth state:', { user: !!user, loading, authTimeout, path: location.pathname });
 
   // If authentication is still loading and we haven't timed out, show a loading state
   if (loading && !authTimeout) {
@@ -36,12 +36,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // If user is not authenticated after loading or timeout, redirect to login page
   if (!user) {
-    console.log('User not authenticated, redirecting to auth page');
+    console.log('User not authenticated, redirecting to auth page from:', location.pathname);
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // If user is authenticated, render the protected content
-  console.log('User authenticated, rendering protected content');
+  console.log('User authenticated, rendering protected content for path:', location.pathname);
   return <>{children}</>;
 };
 

@@ -38,23 +38,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkSession = async () => {
       try {
         setLoading(true);
+        console.log("Checking session...");
         const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (error) {
           console.error("Error getting session:", error);
-        }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const fullName = session.user.user_metadata?.full_name || 'User';
-          console.log("Session user found, ensuring profile exists:", fullName);
-          await ensureProfileExists(session.user.id, fullName);
+          setUser(null);
+          setSession(null);
+        } else {
+          console.log("Session check result:", !!session);
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            const fullName = session.user.user_metadata?.full_name || 'User';
+            console.log("Session user found, ensuring profile exists:", fullName);
+            await ensureProfileExists(session.user.id, fullName);
+          }
         }
       } catch (error) {
         console.error("Unexpected error during session check:", error);
+        setUser(null);
+        setSession(null);
       } finally {
         setLoading(false);
+        console.log("Session check complete, loading set to false");
       }
     };
 
@@ -73,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         setLoading(false);
+        console.log("Auth state change complete, loading set to false");
       }
     );
 
@@ -151,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async (navigateAfterSignOut = true) => {
     try {
+      console.log("Starting sign out process, will navigate:", navigateAfterSignOut);
       setLoading(true);
       
       try {
@@ -158,13 +168,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           console.error("Error during sign out:", error);
+          throw error;
         }
+        
+        console.log("Sign out from Supabase successful");
       } catch (error: any) {
         console.error("Error during sign out:", error);
+        throw error;
+      } finally {
+        // Always clear local state regardless of Supabase error
+        setUser(null);
+        setSession(null);
+        console.log("Local auth state cleared");
       }
-      
-      setUser(null);
-      setSession(null);
       
       if (navigateAfterSignOut) {
         toast({
@@ -172,6 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           description: "You have been signed out successfully",
         });
         
+        console.log("Navigating to auth page after sign out");
         navigate('/auth');
       }
     } catch (error: any) {
@@ -182,6 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } finally {
       setLoading(false);
+      console.log("Sign out process complete, loading set to false");
     }
   };
 

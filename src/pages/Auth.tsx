@@ -32,19 +32,20 @@ const Auth = () => {
   // Sign out existing user when navigating to auth page
   useEffect(() => {
     const cleanupAuth = async () => {
-      if (!authLoading) {
+      if (user) {
         try {
           console.log("Signing out existing user on auth page...");
           await signOut(false); // Pass false to avoid navigation
           console.log('Signed out existing user on auth page');
         } catch (error) {
           console.error('Error signing out on auth page:', error);
+          setIsLoading(false);
         }
       }
     };
     
     cleanupAuth();
-  }, []);
+  }, [user, signOut]);
 
   // Redirect if user is already authenticated
   useEffect(() => {
