@@ -17,6 +17,7 @@ export const useProjects = () => {
 
   useEffect(() => {
     console.log('useProjects hook initializing, user status:', user ? 'logged in' : 'not logged in');
+    console.log('Supabase URL being used:', supabase.supabaseUrl);
     
     const checkConnection = async () => {
       await checkSupabaseConnection();
@@ -45,27 +46,42 @@ export const useProjects = () => {
     setConnectionStatus('checking');
     
     try {
-      // Simple query to check connection
-      const { data, error } = await supabase
-        .from('projects')
-        .select('count', { count: 'exact', head: true });
+      // First, try to ping the database
+      console.log('Attempting to ping database with RPC call...');
+      const { data: pingData, error: pingError } = await supabase.rpc('ping_db');
       
-      if (error) {
-        console.error('Connection test failed:', error);
-        setConnectionStatus('error');
-        setFetchError(`Connection error: ${error.message}`);
-        toast.error(`Database connection error: ${error.message}`);
-        return false;
+      if (pingError) {
+        console.error('RPC ping failed, trying direct table query:', pingError);
+        
+        // If RPC fails, try a simple table query as fallback
+        const { data, error } = await supabase
+          .from('projects')
+          .select('count', { count: 'exact', head: true });
+        
+        if (error) {
+          console.error('Connection test failed:', error);
+          setConnectionStatus('error');
+          const errorMessage = `${error.message}${error.code ? ` (Code: ${error.code})` : ''}`;
+          setFetchError(`Connection error: ${errorMessage}`);
+          toast.error(`Database connection error: ${errorMessage}`);
+          return false;
+        } else {
+          console.log('Connection test successful via table query');
+          setConnectionStatus('connected');
+          setFetchError(null);
+          return true;
+        }
       } else {
-        console.log('Connection test successful');
+        console.log('Connection test successful via RPC ping:', pingData);
         setConnectionStatus('connected');
+        setFetchError(null);
         return true;
       }
     } catch (error: any) {
       console.error('Unexpected error in connection test:', error);
       setConnectionStatus('error');
-      setFetchError(`Unexpected error: ${error.message}`);
-      toast.error(`Connection error: ${error.message}`);
+      setFetchError(`Unexpected error: ${error.message || 'Unknown error'}`);
+      toast.error(`Connection error: ${error.message || 'Unknown error'}`);
       return false;
     }
   };
