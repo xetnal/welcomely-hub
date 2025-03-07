@@ -94,6 +94,9 @@ const Navbar = () => {
     console.log("User role state:", userRole);
   }, [userRole]);
 
+  // Check if user is admin, accounting for case-insensitivity
+  const isAdmin = userRole?.toLowerCase() === 'admin';
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md dark:bg-gray-900 dark:border-gray-800">
       <div className="container flex h-16 items-center justify-between">
@@ -157,7 +160,7 @@ const Navbar = () => {
               >
                 Analytics
               </Link>
-              {userRole === 'Admin' && (
+              {isAdmin && (
                 <Link 
                   to="/admin" 
                   className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
