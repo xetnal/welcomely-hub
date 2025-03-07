@@ -3,7 +3,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { createEmployeeFromUser } from '@/services/employeeService';
 
 type AuthContextType = {
@@ -23,61 +23,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     // Check for active session on mount
     const checkSession = async () => {
-      try {
-        console.info("AuthContext: Checking session...");
-        setLoading(true);
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error("AuthContext: Error getting session:", error);
-          setLoading(false);
-          return;
-        }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // If user exists, ensure they have an employee record
-        if (session?.user) {
-          console.info("AuthContext: User found in session", session.user.email);
-          const fullName = session.user.user_metadata.full_name || 'Unknown User';
-          try {
-            await createEmployeeFromUser(session.user.id, fullName);
-          } catch (err) {
-            console.error("AuthContext: Error creating employee record:", err);
-          }
-        } else {
-          console.info("AuthContext: No user in session");
-        }
-      } catch (err) {
-        console.error("AuthContext: Session check error:", err);
-      } finally {
-        console.info("AuthContext: Session check complete, setting loading=false");
-        setLoading(false);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error getting session:", error);
       }
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      // If user exists, ensure they have an employee record
+      if (session?.user) {
+        const fullName = session.user.user_metadata.full_name || 'Unknown User';
+        await createEmployeeFromUser(session.user.id, fullName);
+      }
+      
+      setLoading(false);
     };
 
     checkSession();
 
     // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.info("AuthContext: Auth state changed:", event, session?.user?.email);
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         // If user exists, ensure they have an employee record
         if (session?.user) {
           const fullName = session.user.user_metadata.full_name || 'Unknown User';
-          try {
-            await createEmployeeFromUser(session.user.id, fullName);
-          } catch (err) {
-            console.error("AuthContext: Error creating employee record:", err);
-          }
+          await createEmployeeFromUser(session.user.id, fullName);
         }
         
         setLoading(false);
@@ -89,22 +66,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Additional effect to handle redirects after auth state changes
-  useEffect(() => {
-    if (!loading) {
-      // If user is logged in and on the auth page, redirect to home
-      if (user && location.pathname === '/auth') {
-        console.log("AuthContext: Redirecting from auth page to home");
-        navigate('/');
-      }
-    }
-  }, [user, loading, location.pathname, navigate]);
-
   const signUp = async (email: string, password: string, fullName: string) => {
-    console.log("AuthContext: Signing up user", email);
     try {
-      setLoading(true);
-      const { data, error } = await supabase.auth.signUp({ 
+      const { error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
@@ -112,98 +76,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      if (error) {
-        console.error("AuthContext: Sign up error:", error);
-        throw error;
-      }
-      
-      if (data.user) {
-        console.log("AuthContext: Sign up successful:", data.user.email);
-      }
-      
+      if (error) throw error;
       toast({
         title: "Account created",
         description: "Please check your email for the confirmation link",
       });
     } catch (error: any) {
-      console.error("AuthContext: Sign up error:", error);
       toast({
         title: "Error signing up",
         description: error.message,
         variant: "destructive",
       });
       throw error;
-    } finally {
-      console.log("AuthContext: Sign up process complete, setting loading=false");
-      setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log("AuthContext: Signing in user", email);
     try {
-      setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        console.error("AuthContext: Sign in error:", error);
-        throw error;
-      }
-      
-      console.log("AuthContext: Sign in successful:", data.user.email);
-      
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
       toast({
         title: "Welcome back",
         description: "You have successfully signed in",
       });
-      
-      navigate('/');
     } catch (error: any) {
-      console.error("AuthContext: Sign in error details:", error);
       toast({
         title: "Error signing in",
         description: error.message,
         variant: "destructive",
       });
       throw error;
-    } finally {
-      console.log("AuthContext: Sign in process complete, setting loading=false");
-      setLoading(false);
     }
   };
 
   const signOut = async () => {
-    console.log("AuthContext: Signing out user");
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("AuthContext: Sign out error:", error);
-        throw error;
-      }
-      
+      if (error) throw error;
       toast({
         title: "Signed out",
         description: "You have been signed out successfully",
       });
-      
-      // Reset user and session state
-      setUser(null);
-      setSession(null);
-      
       // Redirect to auth page after successful sign out
       navigate('/auth');
     } catch (error: any) {
-      console.error("AuthContext: Sign out error:", error);
       toast({
         title: "Error signing out",
         description: error.message,
         variant: "destructive",
       });
-      throw error;
-    } finally {
-      console.log("AuthContext: Sign out process complete, setting loading=false");
-      setLoading(false);
     }
   };
 

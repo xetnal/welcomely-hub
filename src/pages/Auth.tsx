@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,109 +8,41 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading: authLoading } = useAuth();
+  const { user, signIn, signUp, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
   // Get the path the user was trying to access before being redirected to auth
   const from = location.state?.from?.pathname || '/';
 
-  // Check authentication status on mount and when user changes
-  useEffect(() => {
-    const checkAuthAndRedirect = async () => {
-      try {
-        console.log("Auth.tsx: Checking auth status, user:", user?.email || "none");
-        if (user) {
-          console.log("Auth.tsx: User is authenticated, redirecting to", from);
-          navigate(from, { replace: true });
-        }
-      } catch (err) {
-        console.error("Auth.tsx: Error checking auth status:", err);
-      }
-    };
-    
-    checkAuthAndRedirect();
-  }, [user, navigate, from]);
-
-  // Reset loading state when auth context loading state changes
-  useEffect(() => {
-    if (!authLoading && isLoading) {
-      console.log("Auth.tsx: Resetting loading state because authLoading is false");
-      setIsLoading(false);
-    }
-  }, [authLoading, isLoading]);
-
-  // Set a maximum timeout for the loading spinner
-  useEffect(() => {
-    if (isLoading) {
-      const maxLoadingTimer = setTimeout(() => {
-        console.log("Auth.tsx: Maximum loading time reached, forcing loading state to false");
-        setIsLoading(false);
-      }, 8000); // 8 seconds maximum loading time
-      
-      return () => clearTimeout(maxLoadingTimer);
-    }
-  }, [isLoading]);
-
-  // If user is already authenticated and not loading, redirect
-  if (user && !authLoading) {
-    console.log("Auth.tsx: Redirecting authenticated user to", from);
+  // Redirect if user is already authenticated
+  if (user && !loading) {
     return <Navigate to={from} replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
-    
     try {
-      console.log("Auth.tsx: Starting sign in process");
       await signIn(email, password);
-      // We don't need to manually navigate - the useEffect will handle it
-    } catch (err: any) {
-      console.error("Auth.tsx: Sign in error:", err);
-      setError(err.message || 'Failed to sign in');
-      toast({
-        title: "Error signing in",
-        description: err.message || 'Failed to sign in',
-        variant: "destructive",
-      });
-      // Explicitly reset loading
+      // Navigation will happen automatically via the condition above
+    } finally {
       setIsLoading(false);
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
-    
     try {
-      console.log("Auth.tsx: Starting sign up process");
       await signUp(email, password, fullName);
-      toast({
-        title: "Account created",
-        description: "Please check your email for confirmation",
-      });
-      // Explicitly reset loading
-      setIsLoading(false);
-    } catch (err: any) {
-      console.error("Auth.tsx: Sign up error:", err);
-      setError(err.message || 'Failed to sign up');
-      toast({
-        title: "Error creating account",
-        description: err.message || 'Failed to create account',
-        variant: "destructive",
-      });
-      // Explicitly reset loading
+    } finally {
       setIsLoading(false);
     }
   };
@@ -148,11 +80,6 @@ const Auth = () => {
               </CardHeader>
               <form onSubmit={handleSignIn}>
                 <CardContent className="space-y-4">
-                  {error && (
-                    <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm">
-                      {error}
-                    </div>
-                  )}
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -177,15 +104,7 @@ const Auth = () => {
                 </CardContent>
                 <CardFooter>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Signing in...
-                      </span>
-                    ) : "Sign in"}
+                    {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </CardFooter>
               </form>
@@ -202,11 +121,6 @@ const Auth = () => {
               </CardHeader>
               <form onSubmit={handleSignUp}>
                 <CardContent className="space-y-4">
-                  {error && (
-                    <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm">
-                      {error}
-                    </div>
-                  )}
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
                     <Input
@@ -242,15 +156,7 @@ const Auth = () => {
                 </CardContent>
                 <CardFooter>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Creating account...
-                      </span>
-                    ) : "Create account"}
+                    {isLoading ? "Creating account..." : "Create account"}
                   </Button>
                 </CardFooter>
               </form>

@@ -1,125 +1,34 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading: authContextLoading } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [sessionUser, setSessionUser] = useState<any>(null);
-  const [checkError, setCheckError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // If auth context already has a user, no need to check the session manually
-    if (user) {
-      console.log("ProtectedRoute: User found in AuthContext, skipping direct session check");
-      setIsCheckingSession(false);
-      return;
-    }
-
-    // Only do direct session check if AuthContext doesn't have a user yet
-    const checkSession = async () => {
-      try {
-        console.log("ProtectedRoute: Checking session directly from supabase...");
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("ProtectedRoute: Session check error:", error);
-          setCheckError(error.message);
-          setSessionUser(null);
-        } else {
-          setSessionUser(data.session?.user || null);
-          if (data.session?.user) {
-            console.log("ProtectedRoute: Session user found:", data.session.user.email);
-          } else {
-            console.log("ProtectedRoute: No session user found in direct check");
-          }
-        }
-      } catch (err) {
-        console.error("ProtectedRoute: Error checking session:", err);
-        setSessionUser(null);
-      } finally {
-        console.log("ProtectedRoute: Direct session check complete, setting isCheckingSession=false");
-        setIsCheckingSession(false);
-      }
-    };
-
-    // If auth context is still loading, wait for it
-    if (!authContextLoading) {
-      checkSession();
-    }
-  }, [authContextLoading, user]);
-
-  // If auth context loading status changes to false, we can also stop checking
-  useEffect(() => {
-    if (!authContextLoading && isCheckingSession) {
-      console.log("ProtectedRoute: Auth context finished loading, setting isCheckingSession=false");
-      // Add small delay to allow AuthContext to update user if needed
-      const timer = setTimeout(() => {
-        setIsCheckingSession(false);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [authContextLoading, isCheckingSession]);
-
-  // Set a maximum timeout for the loading spinner
-  useEffect(() => {
-    const maxLoadingTime = setTimeout(() => {
-      if (isCheckingSession) {
-        console.log("ProtectedRoute: Maximum loading time reached, forcing completion");
-        setIsCheckingSession(false);
-      }
-    }, 5000); // 5 seconds maximum loading time
-    
-    return () => clearTimeout(maxLoadingTime);
-  }, []);
-
-  // If we're loading or checking session, show loading spinner
-  if (authContextLoading || isCheckingSession) {
-    console.log(`ProtectedRoute: Still loading (auth loading: ${authContextLoading}, checking session: ${isCheckingSession})`);
+  if (loading) {
+    // Show a loading spinner while checking authentication
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">Loading your session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If there was an error checking the session
-  if (checkError) {
-    console.error("ProtectedRoute: Session check error:", checkError);
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-destructive/15 text-destructive p-6 rounded-lg max-w-md">
-          <h3 className="text-lg font-semibold mb-2">Session Error</h3>
-          <p>{checkError}</p>
-          <button 
-            onClick={() => window.location.href = '/auth'} 
-            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md"
-          >
-            Go to Login
-          </button>
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-12 w-48 bg-muted rounded-lg mb-4" />
+          <div className="h-6 w-24 bg-muted rounded-lg" />
         </div>
       </div>
     );
   }
 
   // If user is not authenticated, redirect to auth page with the intended location
-  if (!user && !sessionUser) {
-    console.log("ProtectedRoute: No authenticated user found, redirecting to /auth");
+  if (!user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // User is authenticated, render the protected content
-  console.log("ProtectedRoute: Authentication confirmed, rendering content");
   return <>{children}</>;
 };
 

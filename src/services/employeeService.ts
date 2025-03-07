@@ -10,13 +10,6 @@ export interface Employee {
 
 export const fetchEmployees = async (): Promise<Employee[]> => {
   try {
-    // Check if user is authenticated
-    const { data: session } = await supabase.auth.getSession();
-    if (!session?.session) {
-      console.log("No active session, returning empty employees array");
-      return [];
-    }
-    
     // First try to fetch from employees table
     let { data: employees, error } = await supabase
       .from('employees')
@@ -24,7 +17,6 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
       .limit(100);
     
     if (error) {
-      console.error("Error fetching employees:", error);
       throw error;
     }
     
@@ -35,7 +27,6 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
         .select('id, full_name, avatar_url');
       
       if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
         throw profilesError;
       }
       
@@ -48,22 +39,19 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
           user_id: profile.id
         }));
         
-        // Only proceed with upsert if there are profiles to insert
-        if (employeeInserts.length > 0) {
-          const { data: insertedEmployees, error: insertError } = await supabase
-            .from('employees')
-            .upsert(employeeInserts, { onConflict: 'id' })
-            .select();
-          
-          if (insertError) {
-            console.error('Error creating employees:', insertError);
-            // Even if insert fails, return the profiles data anyway
-            return profiles.map(profile => ({
-              id: profile.id,
-              full_name: profile.full_name || 'Unknown User',
-              avatar_url: profile.avatar_url
-            }));
-          }
+        const { data: insertedEmployees, error: insertError } = await supabase
+          .from('employees')
+          .upsert(employeeInserts, { onConflict: 'id' })
+          .select();
+        
+        if (insertError) {
+          console.error('Error creating employees:', insertError);
+          // Even if insert fails, return the profiles data anyway
+          return profiles.map(profile => ({
+            id: profile.id,
+            full_name: profile.full_name || 'Unknown User',
+            avatar_url: profile.avatar_url
+          }));
         }
         
         // Fetch the updated employees list
@@ -73,7 +61,6 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
           .limit(100);
         
         if (fetchError) {
-          console.error("Error fetching updated employees:", fetchError);
           throw fetchError;
         }
         
@@ -84,29 +71,14 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
     console.log("Fetched employees:", employees);
     return employees || [];
   } catch (error: any) {
-    console.error('Error in fetchEmployees:', error);
-    // Don't show toast on page refresh/initial load
-    if (error.message !== 'JWT expired') {
-      toast.error('Failed to load employees');
-    }
+    console.error('Error fetching employees:', error);
+    toast.error('Failed to load employees');
     return [];
   }
 };
 
 export const createEmployeeFromUser = async (userId: string, fullName: string): Promise<void> => {
   try {
-    // Check if employee already exists
-    const { data: existingEmployee } = await supabase
-      .from('employees')
-      .select('id')
-      .eq('id', userId)
-      .single();
-      
-    if (existingEmployee) {
-      console.log("Employee already exists:", userId);
-      return;
-    }
-    
     const { error } = await supabase
       .from('employees')
       .upsert({
@@ -116,16 +88,12 @@ export const createEmployeeFromUser = async (userId: string, fullName: string): 
       }, { onConflict: 'id' });
     
     if (error) {
-      console.error('Error creating employee from user:', error);
       throw error;
     }
     
     console.log("Created employee from user:", userId);
   } catch (error: any) {
-    console.error('Error in createEmployeeFromUser:', error);
-    // Only show toast for actual errors, not on page refresh
-    if (error.message !== 'JWT expired') {
-      toast.error('Failed to create employee record');
-    }
+    console.error('Error creating employee from user:', error);
+    toast.error('Failed to create employee record');
   }
 };
