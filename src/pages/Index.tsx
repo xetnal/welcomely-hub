@@ -22,17 +22,31 @@ const Index = () => {
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [user]);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
+      console.log('Fetching projects...');
+      
+      // If user is not authenticated yet, we'll handle this case
+      if (!user) {
+        console.log('User not authenticated yet, will fetch projects when user is available');
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('projects')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching projects:', error);
+        throw error;
+      }
+
+      console.log('Projects fetched:', data);
 
       // Transform the data to match our Project type
       const transformedProjects: Project[] = data.map(project => ({
@@ -60,6 +74,11 @@ const Index = () => {
 
   const handleAddProject = async (newProject: Project) => {
     try {
+      if (!user) {
+        toast.error('You must be logged in to create a project');
+        return;
+      }
+
       // Transform Project to database format
       const { data, error } = await supabase
         .from('projects')
@@ -163,6 +182,13 @@ const Index = () => {
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : !user ? (
+          <div className="text-center p-12 bg-muted/20 rounded-lg border border-dashed">
+            <h3 className="text-lg font-medium mb-2">Authentication Required</h3>
+            <p className="text-muted-foreground mb-4">
+              Please log in to view and manage projects
+            </p>
           </div>
         ) : filteredProjects.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

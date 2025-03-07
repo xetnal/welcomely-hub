@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -8,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Project } from '@/lib/types';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddProjectModalProps {
   open: boolean;
@@ -35,10 +35,16 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const [developer, setDeveloper] = useState('Unassigned');
   const [manager, setManager] = useState('Unassigned');
   const [status, setStatus] = useState<'active' | 'completed' | 'on-hold'>('active');
+  const { user } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast.error('You must be logged in to create a project');
+      return;
+    }
+
     if (!name.trim()) {
       toast.error('Please enter a project name');
       return;
@@ -59,7 +65,8 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
       status,
       tasks: [],
-      description: `Project for ${client}`
+      description: `Project for ${client}`,
+      user_id: user.id
     };
 
     onAddProject(newProject);
@@ -178,7 +185,10 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button 
+              type="submit"
+              disabled={!user}
+            >
               Create Project
             </Button>
           </DialogFooter>
