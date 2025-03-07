@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Priority, ProjectStage } from '@/lib/types';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 interface AddTaskModalProps {
   open: boolean;
@@ -18,14 +19,11 @@ interface AddTaskModalProps {
   onAddTask: (newTask: any) => void;
 }
 
-// Mock employees data
-const employees = [
-  { id: '1', name: 'Jane Smith' },
-  { id: '2', name: 'John Doe' },
-  { id: '3', name: 'Alex Johnson' },
-  { id: '4', name: 'Emily Chen' },
-  { id: '5', name: 'Michael Brown' },
-];
+interface Employee {
+  id: string;
+  full_name: string;
+  avatar_url?: string;
+}
 
 const AddTaskModal: React.FC<AddTaskModalProps> = ({ 
   open, 
@@ -38,6 +36,34 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
   const [priority, setPriority] = useState<Priority>('medium');
   const [assignee, setAssignee] = useState('unassigned');
   const [isClientTask, setIsClientTask] = useState(true);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      fetchEmployees();
+    }
+  }, [open]);
+
+  const fetchEmployees = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url');
+      
+      if (error) {
+        throw error;
+      }
+      
+      setEmployees(data || []);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      toast.error('Failed to load employees');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,14 +182,18 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.name}>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        {employee.name}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {isLoading ? (
+                    <SelectItem disabled value="loading">Loading employees...</SelectItem>
+                  ) : (
+                    employees.map((employee) => (
+                      <SelectItem key={employee.id} value={employee.full_name}>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          {employee.full_name}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

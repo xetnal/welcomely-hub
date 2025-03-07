@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { X, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Project } from '@/lib/types';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 interface AddProjectModalProps {
   open: boolean;
@@ -14,15 +16,11 @@ interface AddProjectModalProps {
   onAddProject: (newProject: Project) => void;
 }
 
-// Mock employees data (should match with the existing ones in AddTaskModal)
-const employees = [
-  { id: '1', name: 'Jane Smith' },
-  { id: '2', name: 'John Doe' },
-  { id: '3', name: 'Alex Johnson' },
-  { id: '4', name: 'Emily Chen' },
-  { id: '5', name: 'Michael Brown' },
-  { id: '6', name: 'Sarah Williams' },
-];
+interface Employee {
+  id: string;
+  full_name: string;
+  avatar_url?: string;
+}
 
 const AddProjectModal: React.FC<AddProjectModalProps> = ({ 
   open, 
@@ -34,6 +32,34 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const [developer, setDeveloper] = useState('Unassigned');
   const [manager, setManager] = useState('Unassigned');
   const [status, setStatus] = useState<'active' | 'completed' | 'on-hold' | 'inactive'>('inactive');
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      fetchEmployees();
+    }
+  }, [open]);
+
+  const fetchEmployees = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url');
+      
+      if (error) {
+        throw error;
+      }
+      
+      setEmployees(data || []);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      toast.error('Failed to load employees');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,14 +146,18 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Unassigned">Unassigned</SelectItem>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.name}>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        {employee.name}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {isLoading ? (
+                    <SelectItem disabled value="loading">Loading employees...</SelectItem>
+                  ) : (
+                    employees.map((employee) => (
+                      <SelectItem key={employee.id} value={employee.full_name}>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          {employee.full_name}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -143,14 +173,18 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Unassigned">Unassigned</SelectItem>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.name}>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        {employee.name}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {isLoading ? (
+                    <SelectItem disabled value="loading">Loading employees...</SelectItem>
+                  ) : (
+                    employees.map((employee) => (
+                      <SelectItem key={employee.id} value={employee.full_name}>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          {employee.full_name}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
