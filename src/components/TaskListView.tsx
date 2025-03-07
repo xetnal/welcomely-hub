@@ -1,46 +1,66 @@
 
 import React from 'react';
 import { Task } from '@/lib/types';
+import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import PriorityBadge from './PriorityBadge';
+import TaskCard from './TaskCard';
 
 interface TaskListViewProps {
   tasks: Task[];
+  onDeleteTask?: (taskId: string) => void;
+  onEditTask?: (taskId: string, updatedTask: Partial<Task>) => void;
+  onAddComment?: (taskId: string, content: string) => void;
 }
 
-const TaskListView: React.FC<TaskListViewProps> = ({ tasks }) => {
+const TaskListView: React.FC<TaskListViewProps> = ({ 
+  tasks, 
+  onDeleteTask, 
+  onEditTask,
+  onAddComment
+}) => {
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="rounded-md border dark:border-gray-700">
-      <Table>
-        <TableHeader>
-          <TableRow className="dark:border-gray-700">
-            <TableHead>Title</TableHead>
-            <TableHead>Assignee</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Last Updated</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tasks.map((task) => (
-            <TableRow key={task.id} className="dark:border-gray-700">
-              <TableCell className="font-medium">{task.title}</TableCell>
-              <TableCell>{task.assignee}</TableCell>
-              <TableCell>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                  {task.status}
-                </span>
-              </TableCell>
-              <TableCell>
-                <PriorityBadge priority={task.priority} />
-              </TableCell>
-              <TableCell>{format(task.updated, 'MMM d, yyyy')}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-4"
+    >
+      {tasks.length === 0 ? (
+        <motion.div 
+          variants={item}
+          className="bg-muted dark:bg-gray-800 rounded-lg p-6 text-center"
+        >
+          <p className="text-muted-foreground dark:text-gray-400">No tasks found in this stage.</p>
+        </motion.div>
+      ) : (
+        tasks.map((task, index) => (
+          <TaskCard 
+            key={task.id} 
+            task={task} 
+            index={index}
+            onDeleteTask={onDeleteTask}
+            onEditTask={onEditTask}
+            onAddComment={onAddComment}
+          />
+        ))
+      )}
+    </motion.div>
   );
 };
 

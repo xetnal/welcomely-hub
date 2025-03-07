@@ -1,111 +1,107 @@
 
-import React, { useState } from 'react';
-import { ProjectStage, Task, TaskStatus } from '@/lib/types';
+import React from 'react';
+import { Task, ProjectStage, TaskStatus } from '@/lib/types';
 import TaskCard from './TaskCard';
-import { Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useDrop } from 'react-dnd';
-import AddTaskModal from './AddTaskModal';
+import { Badge } from '@/components/ui/badge';
 
 interface StageColumnProps {
   stage: ProjectStage;
   status: TaskStatus;
   tasks: Task[];
   index: number;
-  onDropTask: (taskId: string, status: TaskStatus) => void;
-  onAddTask?: (newTask: any) => void;
+  onDropTask: (taskId: string, newStatus: TaskStatus) => void;
+  onAddTask?: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
   onEditTask?: (taskId: string, updatedTask: Partial<Task>) => void;
+  onAddComment?: (taskId: string, content: string) => void;
   isStageCompleted?: boolean;
 }
 
-const StatusIcons: Record<TaskStatus, string> = {
-  'Backlog': 'bg-slate-500',
-  'In Progress': 'bg-blue-500',
-  'Blocked': 'bg-red-500',
-  'In Review': 'bg-amber-500',
-  'Completed': 'bg-green-500'
-};
-
-const StageColumn: React.FC<StageColumnProps> = ({ 
-  stage, 
-  status, 
-  tasks, 
-  index, 
+const StageColumn: React.FC<StageColumnProps> = ({
+  stage,
+  status,
+  tasks,
+  index,
   onDropTask,
-  onAddTask,
   onDeleteTask,
   onEditTask,
+  onAddComment,
   isStageCompleted
 }) => {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  
   const [{ isOver }, drop] = useDrop({
     accept: 'task',
     drop: (item: { id: string }) => {
       onDropTask(item.id, status);
-      return { status };
     },
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
     }),
   });
 
-  return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.5,
-          delay: index * 0.1,
-          ease: [0.22, 1, 0.36, 1]
-        }}
-        className={`flex-shrink-0 glass rounded-xl flex flex-col h-full ${isOver ? 'bg-muted/50 dark:bg-gray-700/50' : ''} ${
-          isStageCompleted ? 'border-2 border-green-500 dark:border-green-400' : 'dark:border-gray-700'
-        } dark:bg-gray-800`}
-        ref={drop}
-      >
-        <div className="p-3 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm z-10 border-b dark:border-gray-700">
-          <div className="flex items-center gap-2">
-            <div className={`h-3 w-3 rounded-full ${StatusIcons[status]}`}></div>
-            <h3 className="font-medium">{status}</h3>
-          </div>
-          <span className="text-xs px-2 py-1 bg-muted dark:bg-gray-700 rounded-full text-muted-foreground dark:text-gray-300">
-            {tasks.length}
-          </span>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[200px]">
-          {tasks.map((task, idx) => (
-            <TaskCard 
-              key={task.id} 
-              task={task} 
-              index={idx} 
-              onDeleteTask={onDeleteTask}
-              onEditTask={onEditTask}
-            />
-          ))}
-        </div>
-        
-        <div className="p-3 border-t bg-white/40 dark:bg-gray-800/40 dark:border-gray-700">
-          <button 
-            className="flex items-center gap-1 text-sm w-full justify-center py-1.5 px-3 rounded-md hover:bg-muted dark:hover:bg-gray-700 transition-colors"
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Task</span>
-          </button>
-        </div>
-      </motion.div>
+  const getStatusColor = (status: TaskStatus) => {
+    switch (status) {
+      case 'Completed':
+        return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900/50';
+      case 'In Progress':
+        return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50';
+      case 'Blocked':
+        return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50';
+      case 'In Review':
+        return 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-900/50';
+      default:
+        return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+    }
+  };
 
-      <AddTaskModal
-        open={isAddModalOpen}
-        onOpenChange={setIsAddModalOpen}
-        stage={stage}
-        onAddTask={onAddTask || (() => {})}
-      />
-    </>
+  const getStatusBadgeColor = (status: TaskStatus) => {
+    switch (status) {
+      case 'Completed':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+      case 'In Progress':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'Blocked':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+      case 'In Review':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    }
+  };
+
+  return (
+    <div 
+      ref={drop}
+      className={`rounded-lg border p-3 ${getStatusColor(status)} 
+        transition-colors ${isOver ? 'ring-2 ring-primary' : ''} 
+        ${isStageCompleted && tasks.length > 0 && status !== 'Completed' ? 'ring-2 ring-amber-500' : ''}`}
+    >
+      <div className="flex justify-between items-center mb-3">
+        <Badge variant="outline" className={`${getStatusBadgeColor(status)}`}>
+          {status}
+        </Badge>
+        <span className="text-xs text-muted-foreground dark:text-gray-400">{tasks.length}</span>
+      </div>
+      
+      <div className="space-y-3">
+        {tasks.map((task, i) => (
+          <TaskCard 
+            key={task.id} 
+            task={task} 
+            index={i}
+            onDeleteTask={onDeleteTask}
+            onEditTask={onEditTask}
+            onAddComment={onAddComment}
+          />
+        ))}
+        
+        {tasks.length === 0 && (
+          <div className="h-20 border border-dashed rounded-lg flex items-center justify-center text-sm text-muted-foreground dark:border-gray-700">
+            No tasks
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

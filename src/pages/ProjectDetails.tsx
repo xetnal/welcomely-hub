@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import PageTransition from '@/components/PageTransition';
-import { Project, ProjectStage, Task, TaskStatus } from '@/lib/types';
+import { Project, ProjectStage, Task, TaskStatus, Comment } from '@/lib/types';
 import StageColumn from '@/components/StageColumn';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
@@ -269,6 +269,37 @@ const ProjectDetails = () => {
         )
       };
     });
+  }, [project]);
+
+  const addComment = useCallback((taskId: string, content: string) => {
+    if (!project) return;
+    
+    console.log(`Adding comment to task ${taskId}: ${content}`);
+    
+    setProject(prevProject => {
+      if (!prevProject) return prevProject;
+
+      const newComment: Comment = {
+        id: `c${Date.now()}`,
+        author: "Current User",
+        content: content,
+        timestamp: new Date()
+      };
+
+      return {
+        ...prevProject,
+        tasks: prevProject.tasks.map(task => 
+          task.id === taskId ? 
+          { 
+            ...task, 
+            comments: [...task.comments, newComment],
+            updated: new Date()
+          } : task
+        )
+      };
+    });
+
+    toast.success('Comment added successfully');
   }, [project]);
 
   const overallCompletionPercentage = useMemo(() => {
@@ -542,12 +573,16 @@ const ProjectDetails = () => {
                             onAddTask={addTask}
                             onDeleteTask={deleteTask}
                             onEditTask={editTask}
+                            onAddComment={addComment}
                             isStageCompleted={isStageCompleted(stage)}
                           />
                         ))}
                       </div>
                     ) : (
-                      <TaskListView tasks={getTasksByStage(stage)} />
+                      <TaskListView 
+                        tasks={getTasksByStage(stage)} 
+                        onAddComment={addComment}
+                      />
                     )}
                   </TabsContent>
                 ))}
