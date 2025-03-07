@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -5,7 +6,6 @@ import Index from './pages/Index';
 import Auth from './pages/Auth';
 import AdminUsers from './pages/AdminUsers';
 import ProjectDetail from './pages/ProjectDetail';
-import Navbar from './components/Navbar';
 import { Toaster } from '@/components/ui/toaster';
 import Dashboard from './pages/Dashboard';
 
@@ -27,4 +27,3 @@ function App() {
 }
 
 export default App;
-
