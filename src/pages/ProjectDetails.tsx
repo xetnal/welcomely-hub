@@ -582,6 +582,8 @@ const ProjectDetails = () => {
                       <TaskListView 
                         tasks={getTasksByStage(stage)} 
                         onAddComment={addComment}
+                        onDeleteTask={deleteTask}
+                        onEditTask={editTask}
                       />
                     )}
                   </TabsContent>
