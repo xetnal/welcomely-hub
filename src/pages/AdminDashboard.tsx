@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Shield, Save, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -112,7 +113,7 @@ const AdminDashboard = () => {
 
     setSavingChanges(true);
     try {
-      // Update each user's role in both profiles
+      // Update each user's role in both profiles and user_roles tables
       const promises = Object.entries(pendingChanges).map(([userId, role]) => {
         // Update the profile
         const profileUpdate = supabase
@@ -120,6 +121,7 @@ const AdminDashboard = () => {
           .update({ role })
           .eq('id', userId);
           
+        // The trigger will automatically update the user_roles table
         return profileUpdate;
       });
 
