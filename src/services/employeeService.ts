@@ -20,7 +20,7 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
       throw error;
     }
     
-    console.log("Fetched employees:", data);
+    console.log("Fetched employees from profiles table:", data);
     
     // Convert profiles to the employee format
     const employees: Employee[] = data.map(profile => ({
