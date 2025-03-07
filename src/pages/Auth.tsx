@@ -30,8 +30,13 @@ const Auth = () => {
     });
   }, [user, loading, location.pathname, from]);
 
-  // Only redirect away from auth page if user is authenticated AND we're not in the process of loading
-  if (user && !loading) {
+  // When loading, show nothing to prevent flash
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  // Only redirect away from auth page if user is authenticated
+  if (user) {
     console.log("Redirecting authenticated user from auth page to:", from);
     return <Navigate to={from} replace />;
   }

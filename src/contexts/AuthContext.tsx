@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -134,36 +133,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Attempting to sign out");
       setLoading(true);
       
-      // Clear all cookies, localStorage and sessionStorage
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
+      // Create a new supabase instance to avoid session issues
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.warn("Server sign out response error:", error);
+      }
+      
+      // Thorough cleanup of all Supabase tokens
+      // Clear specific Supabase token keys
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('sb-') || key.includes('supabase')) {
+          localStorage.removeItem(key);
+        }
+      }
+      
+      for (const key of Object.keys(sessionStorage)) {
+        if (key.startsWith('sb-') || key.includes('supabase')) {
+          sessionStorage.removeItem(key);
+        }
+      }
+      
+      // Clear all cookies
       document.cookie.split(";").forEach((c) => {
         document.cookie = c
           .replace(/^ +/, "")
           .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
       
-      // Clear local state first - this is the most important part
+      // Clear local state
       setUser(null);
       setSession(null);
       
-      // Force a route change immediately
+      // Immediately navigate to auth
       navigate('/auth', { replace: true });
-      
-      // Now attempt to sign out on the server (but we don't need to wait for it)
-      try {
-        // We don't await this, as we've already changed local state and navigation
-        await supabase.auth.signOut({ scope: 'global' }).then(({ error }) => {
-          if (error) {
-            console.warn("Supabase sign out error:", error);
-          } else {
-            console.log("Server-side sign out successful");
-          }
-        });
-      } catch (serverError) {
-        console.warn("Error during server sign out:", serverError);
-        // We already navigated, so we don't need to do anything here
-      }
       
       console.log("Sign out successful");
       toast.success("Signed out successfully");
@@ -172,7 +174,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Sign out error:", error);
       toast.error(`Error signing out: ${error.message}`);
       
-      // Even on error, ensure we navigate to auth page
+      // Even on error, ensure we navigate to auth page and clear state
+      setUser(null);
+      setSession(null);
       navigate('/auth', { replace: true });
     } finally {
       setLoading(false);
