@@ -86,38 +86,42 @@ const Navbar = () => {
           </Link>
           
           <nav className="hidden md:flex gap-6">
-            <Link 
-              to="/" 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive('/') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
-              }`}
-            >
-              Home
-            </Link>
-            <Link 
-              to="/projects" 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive('/projects') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
-              }`}
-            >
-              Projects
-            </Link>
-            <Link 
-              to="/reports" 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive('/reports') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
-              }`}
-            >
-              Reports
-            </Link>
-            <Link 
-              to="/analytics" 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive('/analytics') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
-              }`}
-            >
-              Analytics
-            </Link>
+            {user && (
+              <>
+                <Link 
+                  to="/" 
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    isActive('/') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+                  }`}
+                >
+                  Home
+                </Link>
+                <Link 
+                  to="/projects" 
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    isActive('/projects') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+                  }`}
+                >
+                  Projects
+                </Link>
+                <Link 
+                  to="/reports" 
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    isActive('/reports') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+                  }`}
+                >
+                  Reports
+                </Link>
+                <Link 
+                  to="/analytics" 
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    isActive('/analytics') ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-gray-400'
+                  }`}
+                >
+                  Analytics
+                </Link>
+              </>
+            )}
           </nav>
         </div>
         

@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -60,15 +61,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkSession();
 
+    // Using subscription to track auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.email);
+        
+        // Update local state with new session information
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
         
         if (event === 'SIGNED_OUT') {
           console.log("User signed out, redirecting to auth page");
+          // When signed out, force navigate to auth page
           navigate('/auth', { replace: true });
         } else if (event === 'SIGNED_IN' && location.pathname === '/auth') {
           console.log("User signed in, redirecting to home page");
@@ -129,22 +134,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Attempting to sign out");
       setLoading(true);
       
+      // First clear local state before calling supabase signOut
+      // This prevents the auth state from being temporarily restored by the onAuthStateChange listener
       setUser(null);
       setSession(null);
       
+      // Call supabase signOut and handle any errors
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.warn("Supabase sign out error:", error);
       }
       
+      // Show success message and force navigation
       console.log("Sign out successful");
       toast.success("Signed out successfully");
       
-      navigate('/auth', { replace: true });
+      // Force navigation with setTimeout to ensure it happens after state updates
+      setTimeout(() => {
+        navigate('/auth', { replace: true });
+      }, 0);
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast.error(`Error signing out: ${error.message}`);
-      navigate('/auth', { replace: true });
+      
+      // Even on error, try to navigate to auth page
+      setTimeout(() => {
+        navigate('/auth', { replace: true });
+      }, 0);
     } finally {
       setLoading(false);
     }
