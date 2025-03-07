@@ -18,14 +18,19 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Add a function to test connection (we'll create this on the DB side)
 // Check if the supabase client is working
-supabase.rpc('ping_db')
-  .then(({ data, error }) => {
+// Fix TypeScript error by explicitly handling the Promise
+const testConnection = async () => {
+  try {
+    const { data, error } = await supabase.rpc('ping_db');
     if (error) {
       console.error('Supabase client initialization error (in ping test):', error);
     } else {
       console.log('Supabase client initialized successfully:', data);
     }
-  })
-  .catch(err => {
+  } catch (err) {
     console.error('Exception in Supabase ping test:', err);
-  });
+  }
+};
+
+// Execute the test connection function
+testConnection();
