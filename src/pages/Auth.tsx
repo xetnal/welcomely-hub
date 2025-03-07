@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,15 +10,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, signOut, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+  
+  // Get the intended destination from location state, or default to home
+  const from = (location.state as any)?.from?.pathname || '/';
+  
+  // If user is already authenticated and has completed loading, redirect to the intended destination
+  useEffect(() => {
+    // If we detect a user is already logged in when they visit the auth page,
+    // sign them out first to ensure a clean auth state
+    const handleExistingSession = async () => {
+      if (user && !loading) {
+        console.log("User already logged in on auth page, signing out first");
+        try {
+          await signOut();
+        } catch (error) {
+          console.error("Error signing out existing user:", error);
+        }
+      }
+    };
+    
+    handleExistingSession();
+  }, [user, loading, signOut]);
 
-  // Redirect if user is already authenticated
-  if (user && !loading) {
-    return <Navigate to="/" replace />;
+  // Only redirect away from auth page if user is authenticated AND we're not in the process of signing them out
+  if (user && !loading && from !== '/auth') {
+    console.log("Redirecting authenticated user from auth page to:", from);
+    return <Navigate to={from} replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -97,7 +120,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
                     {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </CardFooter>
@@ -149,7 +172,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
                     {isLoading ? "Creating account..." : "Create account"}
                   </Button>
                 </CardFooter>

@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import ProjectDetails from "./pages/ProjectDetails";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -23,12 +24,19 @@ const App = () => (
           <Sonner />
           <AnimatePresence mode="wait">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/projects" element={<Index />} />
-              <Route path="/project/:id" element={<ProjectDetails />} />
-              <Route path="/reports" element={<Index />} />
-              <Route path="/analytics" element={<Index />} />
+              {/* Public routes */}
               <Route path="/auth" element={<Auth />} />
+              
+              {/* Protected routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/projects" element={<Index />} />
+                <Route path="/project/:id" element={<ProjectDetails />} />
+                <Route path="/reports" element={<Index />} />
+                <Route path="/analytics" element={<Index />} />
+              </Route>
+              
+              {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>

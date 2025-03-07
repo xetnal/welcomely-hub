@@ -8,8 +8,9 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const location = useLocation();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     // Check for saved theme preference
@@ -40,6 +41,15 @@ const Navbar = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      await signOut();
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -124,10 +134,11 @@ const Navbar = () => {
                 <Button 
                   variant="ghost" 
                   className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400"
-                  onClick={signOut}
+                  onClick={handleSignOut}
+                  disabled={isSigningOut || loading}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                  {isSigningOut ? "Signing Out..." : "Sign Out"}
                 </Button>
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center dark:bg-primary/30 text-primary-foreground">
                   <span className="text-xs font-medium">

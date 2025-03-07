@@ -44,33 +44,6 @@ export type Database = {
           },
         ]
       }
-      employees: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          full_name: string
-          id: string
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          full_name: string
-          id?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          full_name?: string
-          id?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -210,6 +183,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_auth_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_authenticated_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
