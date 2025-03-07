@@ -147,8 +147,8 @@ const UserManagement = () => {
                     <TableCell>{user.email || 'N/A'}</TableCell>
                     <TableCell>
                       <Select
-                        value={user.role}
-                        onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
+                        value={user.role as UserRole}
+                        onValueChange={(newRole: UserRole) => handleRoleChange(user.id, newRole)}
                       >
                         <SelectTrigger className="w-32">
                           <SelectValue placeholder="Select role" />
