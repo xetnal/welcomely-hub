@@ -20,6 +20,13 @@ const Auth = () => {
   // Get the pathname to redirect to after login
   const from = location.state?.from?.pathname || '/';
 
+  // Reset loading state when auth state changes
+  useEffect(() => {
+    if (!authLoading) {
+      setIsLoading(false);
+    }
+  }, [authLoading]);
+
   // Sign out existing user when navigating to auth page
   useEffect(() => {
     const cleanupAuth = async () => {
@@ -48,8 +55,7 @@ const Auth = () => {
       await signIn(email, password);
     } catch (error) {
       console.error('Sign in error:', error);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Make sure to reset loading state on error
     }
   };
 
@@ -60,8 +66,7 @@ const Auth = () => {
       await signUp(email, password, fullName);
     } catch (error) {
       console.error('Sign up error:', error);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Make sure to reset loading state on error
     }
   };
 
