@@ -30,22 +30,28 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
   useEffect(() => {
     const loadEmployees = async () => {
       setIsLoading(true);
-      const employeeData = await fetchEmployees();
-      
-      const uniqueEmployees = employeeData.reduce((acc: Employee[], current) => {
-        const x = acc.find(item => item.full_name === current.full_name);
-        if (!x) {
-          return acc.concat([current]);
-        } else {
-          if (current.user_id === user?.id) {
-            return acc.filter(item => item.full_name !== current.full_name).concat([current]);
+      try {
+        const employeeData = await fetchEmployees();
+        
+        // Filter out duplicates and prioritize the current user's profile
+        const uniqueEmployees = employeeData.reduce((acc: Employee[], current) => {
+          const x = acc.find(item => item.full_name === current.full_name);
+          if (!x) {
+            return acc.concat([current]);
+          } else {
+            if (current.user_id === user?.id) {
+              return acc.filter(item => item.full_name !== current.full_name).concat([current]);
+            }
+            return acc;
           }
-          return acc;
-        }
-      }, []);
-      
-      setEmployees(uniqueEmployees);
-      setIsLoading(false);
+        }, []);
+        
+        setEmployees(uniqueEmployees);
+      } catch (error) {
+        console.error('Error loading employees:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadEmployees();
@@ -63,7 +69,7 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
         <SelectContent>
           <SelectItem value={defaultOption}>{defaultLabel}</SelectItem>
           {isLoading ? (
-            <SelectItem disabled value="loading">Loading employees...</SelectItem>
+            <SelectItem disabled value="loading">Loading profiles...</SelectItem>
           ) : (
             employees.map((employee) => (
               <SelectItem key={employee.id} value={employee.full_name}>
