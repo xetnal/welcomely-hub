@@ -54,36 +54,33 @@ const AdminDashboard = () => {
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        // Get current user's role first
-        const { data: currentUserData, error: currentUserError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user?.id)
-          .single();
+        // Get current user's role using the new function
+        const { data: currentUserRoleData, error: currentUserRoleError } = await supabase
+          .rpc('get_user_role', { user_id: user?.id });
 
-        if (currentUserError) {
-          throw currentUserError;
+        if (currentUserRoleError) {
+          throw currentUserRoleError;
         }
 
-        setCurrentUserRole(currentUserData.role);
-        console.log("Current user role:", currentUserData.role);
+        setCurrentUserRole(currentUserRoleData);
+        console.log("Current user role:", currentUserRoleData);
 
         // Only proceed to fetch all users if current user is Admin
-        if (currentUserData.role === 'Admin') {
-          // Fetch profiles with user email from auth.users (via a join)
-          const { data: userData, error: usersError } = await supabase
+        if (currentUserRoleData === 'Admin') {
+          // Fetch profiles with user roles
+          const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
             .select('id, full_name, avatar_url, role')
             .order('full_name');
 
-          if (usersError) {
-            throw usersError;
+          if (profilesError) {
+            throw profilesError;
           }
 
           // We can't get emails from auth.users via the client
           // so we'll just display the profiles without emails
-          setUsers(userData);
-          console.log("Fetched users:", userData.length);
+          setUsers(profilesData);
+          console.log("Fetched users:", profilesData.length);
         } else {
           // Not an admin, show warning
           toast.error("You don't have admin privileges");
@@ -113,13 +110,17 @@ const AdminDashboard = () => {
 
     setSavingChanges(true);
     try {
-      // Update each user's role
-      const promises = Object.entries(pendingChanges).map(([userId, role]) =>
-        supabase
+      // Update each user's role in both profiles and user_roles
+      const promises = Object.entries(pendingChanges).map(([userId, role]) => {
+        // Update the profile
+        const profileUpdate = supabase
           .from('profiles')
           .update({ role })
-          .eq('id', userId)
-      );
+          .eq('id', userId);
+          
+        // The user_roles table will be updated via trigger
+        return profileUpdate;
+      });
 
       const results = await Promise.all(promises);
       

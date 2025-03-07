@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sun, Moon, LogOut, LogIn, Shield } from 'lucide-react';
@@ -34,19 +35,18 @@ const Navbar = () => {
       if (user) {
         try {
           setIsLoadingRole(true);
-          // Direct query with only the necessary fields to avoid recursion
+          
+          // Using the new get_user_role function to avoid recursion
           const { data, error } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
+            .rpc('get_user_role', { user_id: user.id });
             
           if (error) {
             console.error('Error fetching user role:', error);
             return;
           }
           
-          setUserRole(data.role);
+          console.log("Role data from RPC:", data);
+          setUserRole(data);
         } catch (error) {
           console.error('Error fetching user role:', error);
         } finally {
