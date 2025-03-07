@@ -20,8 +20,15 @@ const Auth = () => {
   // Get the intended destination from location state, or default to home
   const from = (location.state as any)?.from?.pathname || '/';
   
-  // If user is already authenticated and has completed loading, redirect to the intended destination
   useEffect(() => {
+    // Log the current auth state for debugging
+    console.log("Auth page loaded", { 
+      userExists: !!user, 
+      loading,
+      currentPath: location.pathname,
+      redirectTarget: from
+    });
+
     // If we detect a user is already logged in when they visit the auth page,
     // sign them out first to ensure a clean auth state
     const handleExistingSession = async () => {
@@ -36,7 +43,7 @@ const Auth = () => {
     };
     
     handleExistingSession();
-  }, [user, loading, signOut]);
+  }, [user, loading, signOut, location.pathname, from]);
 
   // Only redirect away from auth page if user is authenticated AND we're not in the process of signing them out
   if (user && !loading && from !== '/auth') {

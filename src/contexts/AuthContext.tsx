@@ -40,8 +40,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(data.session?.user ?? null);
           console.log("Session check complete", { 
             hasSession: !!data.session,
-            user: data.session?.user?.email
+            user: data.session?.user?.email,
+            currentPath: location.pathname
           });
+          
+          // If we're on the auth page but have a valid session, redirect to home
+          if (data.session && location.pathname === '/auth') {
+            navigate('/', { replace: true });
+          }
+          // If we're not on the auth page and have no session, redirect to auth
+          else if (!data.session && location.pathname !== '/auth') {
+            navigate('/auth', { replace: true });
+          }
         }
       } catch (err) {
         console.error("Unexpected error during session check:", err);
@@ -124,18 +134,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Attempting to sign out");
       setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Error during sign out:", error);
-        throw error;
-      }
       
-      // Force clear user and session state
+      // Force clear user and session state first
       setUser(null);
       setSession(null);
       
+      // Then attempt to sign out from Supabase
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error("Error during sign out:", error);
+          // We continue even if there's an error as we've already cleared the local state
+          if (error.message !== "Auth session missing!") {
+            throw error;
+          }
+        }
+      } catch (supabaseError) {
+        console.warn("Supabase sign out error:", supabaseError);
+        // We continue anyway as we've already cleared the local state
+      }
+      
       console.log("Sign out successful");
       toast.success("Signed out successfully");
+      
+      // Force redirect to auth page
+      navigate('/auth', { replace: true });
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast.error(`Error signing out: ${error.message}`);
