@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Search, Plus, Filter } from 'lucide-react';
@@ -21,7 +20,11 @@ const Index = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    fetchProjects();
+    if (user) {
+      fetchProjects();
+    } else {
+      setLoading(false);
+    }
   }, [user]);
 
   const fetchProjects = async () => {
@@ -29,13 +32,6 @@ const Index = () => {
       setLoading(true);
       console.log('Fetching projects...');
       
-      // If user is not authenticated yet, we'll handle this case
-      if (!user) {
-        console.log('User not authenticated yet, will fetch projects when user is available');
-        setLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase
         .from('projects')
         .select('*')
@@ -49,7 +45,7 @@ const Index = () => {
       console.log('Projects fetched:', data);
 
       // Transform the data to match our Project type
-      const transformedProjects: Project[] = data.map(project => ({
+      const transformedProjects: Project[] = data ? data.map(project => ({
         id: project.id,
         name: project.name,
         client: project.client,
@@ -61,7 +57,7 @@ const Index = () => {
         description: project.description,
         tasks: [],
         completedStages: project.completed_stages || []
-      }));
+      })) : [];
 
       setProjects(transformedProjects);
     } catch (error: any) {
@@ -182,13 +178,6 @@ const Index = () => {
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        ) : !user ? (
-          <div className="text-center p-12 bg-muted/20 rounded-lg border border-dashed">
-            <h3 className="text-lg font-medium mb-2">Authentication Required</h3>
-            <p className="text-muted-foreground mb-4">
-              Please log in to view and manage projects
-            </p>
           </div>
         ) : filteredProjects.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

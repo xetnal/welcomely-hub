@@ -25,7 +25,9 @@ const App = () => (
         <AuthProvider>
           <AnimatePresence mode="wait">
             <Routes>
-              <Route path="/" element={
+              {/* Redirect from root to auth page by default */}
+              <Route path="/" element={<Navigate to="/auth" replace />} />
+              <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Index />
                 </ProtectedRoute>

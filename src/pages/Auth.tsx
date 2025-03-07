@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -15,20 +15,23 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [activeTab, setActiveTab] = useState('login');
+  const navigate = useNavigate();
 
-  // Redirect to home if already logged in
+  // Redirect to dashboard if already logged in
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     await signIn(email, password);
+    // Navigate is handled by the AuthContext after successful login
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     await signUp(email, password, fullName);
+    // Navigate is handled by the AuthContext after successful signup
   };
 
   return (
