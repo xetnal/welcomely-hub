@@ -24,13 +24,21 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
 }) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadEmployees = async () => {
-      setIsLoading(true);
-      const employeeData = await fetchEmployees();
-      setEmployees(employeeData);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        setError(null);
+        const employeeData = await fetchEmployees();
+        setEmployees(employeeData);
+      } catch (err) {
+        console.error("Error loading employees:", err);
+        setError("Failed to load employees");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadEmployees();
@@ -41,6 +49,7 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
       <Select
         value={value}
         onValueChange={onChange}
+        defaultValue={defaultOption}
       >
         <SelectTrigger>
           <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
@@ -49,6 +58,8 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
           <SelectItem value={defaultOption}>{defaultLabel}</SelectItem>
           {isLoading ? (
             <SelectItem disabled value="loading">Loading employees...</SelectItem>
+          ) : error ? (
+            <SelectItem disabled value="error">Error: {error}</SelectItem>
           ) : (
             employees.map((employee) => (
               <SelectItem key={employee.id} value={employee.id}>
