@@ -1,17 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { Search, Plus, Filter } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import ProjectCard from '@/components/ProjectCard';
 import { Project } from '@/lib/types';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import AddProjectModal from '@/components/AddProjectModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+
+// Import new components
+import ProjectHeader from '@/components/dashboard/ProjectHeader';
+import ProjectSearch from '@/components/dashboard/ProjectSearch';
+import ProjectList from '@/components/dashboard/ProjectList';
 
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -144,75 +144,21 @@ const Index = () => {
       
       <PageTransition className="flex-1 container py-8">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <motion.h1 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-3xl font-bold"
-            >
-              Project Dashboard
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-muted-foreground"
-            >
-              {format(new Date(), 'EEEE, MMMM d, yyyy')}
-            </motion.p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                className="w-full bg-white/80 border pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
-            
-            <Button 
-              className="flex items-center gap-1"
-              onClick={() => setIsAddProjectModalOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span>New Project</span>
-            </Button>
-          </div>
+          <ProjectHeader />
+          <ProjectSearch 
+            searchQuery={searchQuery} 
+            setSearchQuery={setSearchQuery}
+            onAddProject={() => setIsAddProjectModalOpen(true)}
+          />
         </div>
         
-        {loading && !fetchTimedOut ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        ) : filteredProjects.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center p-12 bg-muted/20 rounded-lg border border-dashed">
-            <h3 className="text-lg font-medium mb-2">No projects found</h3>
-            <p className="text-muted-foreground mb-4">
-              {searchQuery ? 'No projects match your search criteria' : fetchTimedOut ? 
-                'No projects found. Please create your first project.' : 
-                'You have not created any projects yet'}
-            </p>
-            <Button onClick={() => setIsAddProjectModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create your first project
-            </Button>
-          </div>
-        )}
+        <ProjectList 
+          projects={filteredProjects}
+          loading={loading}
+          fetchTimedOut={fetchTimedOut}
+          searchQuery={searchQuery}
+          onAddProject={() => setIsAddProjectModalOpen(true)}
+        />
       </PageTransition>
 
       <AddProjectModal
