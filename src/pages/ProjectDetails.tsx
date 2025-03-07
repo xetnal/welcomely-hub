@@ -22,57 +22,62 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
 const fetchProject = async (projectId: string) => {
-  // Fetch project details
-  const { data: project, error: projectError } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', projectId)
-    .single();
+  try {
+    // Fetch project details
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single();
 
-  if (projectError) throw new Error(projectError.message);
-  
-  // Fetch tasks for this project
-  const { data: tasks, error: tasksError } = await supabase
-    .from('tasks')
-    .select('*, comments(*)')
-    .eq('project_id', projectId);
+    if (projectError) throw new Error(projectError.message);
+    
+    // Fetch tasks for this project
+    const { data: tasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select('*, comments(*)')
+      .eq('project_id', projectId);
 
-  if (tasksError) throw new Error(tasksError.message);
+    if (tasksError) throw new Error(tasksError.message);
 
-  // Transform the tasks to match our frontend Task type
-  const formattedTasks = tasks.map(task => ({
-    id: task.id,
-    title: task.title,
-    description: task.description || '',
-    stage: task.stage,
-    status: task.status,
-    priority: task.priority,
-    assignee: task.assignee || 'Unassigned',
-    isClientTask: task.is_client_task,
-    comments: (task.comments || []).map((comment: any) => ({
-      id: comment.id,
-      author: comment.author,
-      content: comment.content,
-      timestamp: new Date(comment.created_at)
-    })),
-    created: new Date(task.created_at),
-    updated: new Date(task.updated_at)
-  }));
+    // Transform the tasks to match our frontend Task type
+    const formattedTasks = tasks.map(task => ({
+      id: task.id,
+      title: task.title,
+      description: task.description || '',
+      stage: task.stage,
+      status: task.status,
+      priority: task.priority,
+      assignee: task.assignee || 'Unassigned',
+      isClientTask: task.is_client_task,
+      comments: (task.comments || []).map((comment: any) => ({
+        id: comment.id,
+        author: comment.author,
+        content: comment.content,
+        timestamp: new Date(comment.created_at)
+      })),
+      created: new Date(task.created_at),
+      updated: new Date(task.updated_at)
+    }));
 
-  // Return formatted project data
-  return {
-    id: project.id,
-    name: project.name,
-    client: project.client,
-    developer: project.developer,
-    manager: project.manager || 'Unassigned',
-    startDate: new Date(project.start_date),
-    endDate: new Date(project.end_date),
-    status: project.status,
-    description: project.description || '',
-    completedStages: project.completed_stages || [],
-    tasks: formattedTasks
-  } as Project;
+    // Return formatted project data
+    return {
+      id: project.id,
+      name: project.name,
+      client: project.client,
+      developer: project.developer,
+      manager: project.manager || 'Unassigned',
+      startDate: new Date(project.start_date),
+      endDate: new Date(project.end_date),
+      status: project.status,
+      description: project.description || '',
+      completedStages: project.completed_stages || [],
+      tasks: formattedTasks
+    } as Project;
+  } catch (error) {
+    console.error('Error in fetchProject:', error);
+    throw error;
+  }
 };
 
 const ProjectDetails = () => {
@@ -88,6 +93,7 @@ const ProjectDetails = () => {
     queryKey: ['project', id],
     queryFn: () => fetchProject(id || ''),
     enabled: !!id && !!user,
+    retry: 1, // Only retry once to avoid infinite loading on genuine errors
   });
 
   // Handle API errors
@@ -461,15 +467,18 @@ const ProjectDetails = () => {
 
   if (error || !project) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-medium mb-2">Project Not Found</h2>
-          <p className="text-muted-foreground mb-4">
-            The project you're looking for doesn't exist or has been removed.
-          </p>
-          <Link to="/projects" className="text-primary hover:underline">
-            Return to Dashboard
-          </Link>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-xl font-medium mb-2">Project Not Found</h2>
+            <p className="text-muted-foreground mb-4">
+              The project couldn't be loaded. {error ? `Error: ${(error as Error).message}` : ''}
+            </p>
+            <Link to="/projects" className="text-primary hover:underline">
+              Return to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     );
