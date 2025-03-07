@@ -39,19 +39,23 @@ const Auth = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <div className="flex justify-center mb-8">
+        <div className="flex flex-col items-center mb-8">
           <img 
             src="/lovable-uploads/22886747-a1b6-4177-9722-48875351f084.png" 
             alt="Workflow Hub Logo" 
-            className="h-12 w-auto"
+            className="h-16 w-auto mb-4"
           />
+          <h1 className="text-3xl font-bold text-center">Welcome to Workflow Hub</h1>
+          <p className="text-center text-gray-600 dark:text-gray-400 mt-2">
+            Your centralized platform for managing projects and tasks efficiently
+          </p>
         </div>
         
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Workflow Hub</CardTitle>
+            <CardTitle className="text-2xl text-center">Get Started</CardTitle>
             <CardDescription className="text-center">
-              Manage your projects efficiently
+              Sign in to your account or create a new one
             </CardDescription>
           </CardHeader>
           
@@ -145,6 +149,12 @@ const Auth = () => {
             </TabsContent>
           </Tabs>
         </Card>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            By signing up, you agree to our Terms of Service and Privacy Policy.
+          </p>
+        </div>
       </motion.div>
     </div>
   );
