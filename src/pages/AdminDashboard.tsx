@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Shield, Save, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -64,8 +65,9 @@ const AdminDashboard = () => {
         console.log("Current user role:", currentUserRoleData);
 
         if (currentUserRoleData?.toLowerCase() === 'admin') {
+          // Updated call to RPC that includes email information
           const { data: profilesData, error: profilesError } = await supabase
-            .rpc('get_all_profiles');
+            .rpc('get_all_profiles_with_email');
 
           if (profilesError) {
             throw profilesError;
@@ -103,18 +105,27 @@ const AdminDashboard = () => {
 
     setSavingChanges(true);
     try {
-      const promises = Object.entries(pendingChanges).map(([userId, role]) => {
-        return supabase.rpc('update_user_role', { 
+      // Process one role update at a time to better identify errors
+      const results = [];
+      
+      for (const [userId, role] of Object.entries(pendingChanges)) {
+        console.log(`Updating user ${userId} to role ${role}`);
+        const { data, error } = await supabase.rpc('update_user_role', { 
           target_user_id: userId, 
           new_role: role 
         });
-      });
-
-      const results = await Promise.all(promises);
-      
-      const errors = results.filter(result => result.error || !result.data);
-      if (errors.length > 0) {
-        throw new Error(`${errors.length} updates failed`);
+        
+        if (error) {
+          console.error(`Error updating user ${userId}:`, error);
+          throw new Error(`Failed to update user ${userId}: ${error.message}`);
+        }
+        
+        if (!data) {
+          console.error(`No data returned for user ${userId}`);
+          throw new Error(`Failed to update user ${userId}: No data returned`);
+        }
+        
+        results.push({ userId, success: true });
       }
 
       setUsers(users.map((user) => {
