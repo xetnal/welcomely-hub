@@ -19,9 +19,13 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [fetchTimedOut, setFetchTimedOut] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
+    console.log('Index component mounted, checking Supabase connection...');
+    // Check Supabase connection
+    checkSupabaseConnection();
     fetchProjects();
     
     // Set a timeout to show "no projects" message if fetch takes too long
@@ -36,10 +40,32 @@ const Index = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
+  const checkSupabaseConnection = async () => {
+    console.log('Testing Supabase connection...');
+    
+    try {
+      // Simple ping to check connection
+      const { data, error } = await supabase.from('projects').select('count()', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error('Supabase connection test failed:', error);
+        setFetchError(`Connection error: ${error.message}`);
+        toast.error(`Supabase connection error: ${error.message}`);
+      } else {
+        console.log('Supabase connection successful');
+      }
+    } catch (error: any) {
+      console.error('Unexpected error testing Supabase connection:', error);
+      setFetchError(`Unexpected connection error: ${error.message}`);
+      toast.error(`Connection error: ${error.message}`);
+    }
+  };
+
   const fetchProjects = async () => {
     try {
       setLoading(true);
       setFetchTimedOut(false);
+      setFetchError(null);
       console.log('Fetching all projects...');
       
       // First, let's check if the projects table exists and has data
@@ -51,10 +77,13 @@ const Index = () => {
       
       if (countError) {
         console.error('Error checking project count:', countError);
+        setFetchError(`Count error: ${countError.message}`);
+        toast.error(`Error checking project count: ${countError.message}`);
         throw countError;
       }
       
       // Fetch all projects without filtering by user_id
+      console.log('Attempting to fetch all projects with full query...');
       const { data, error } = await supabase
         .from('projects')
         .select('*')
@@ -62,6 +91,9 @@ const Index = () => {
 
       if (error) {
         console.error('Error fetching projects:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        setFetchError(`Fetch error: ${error.message} (${error.code})`);
+        toast.error(`Error fetching projects: ${error.message}`);
         throw error;
       }
 
@@ -98,8 +130,9 @@ const Index = () => {
 
       setProjects(transformedProjects);
     } catch (error: any) {
+      console.error('Detailed error fetching projects:', error);
+      setFetchError(`Error: ${error.message}`);
       toast.error(`Error fetching projects: ${error.message}`);
-      console.error('Error fetching projects:', error);
     } finally {
       setLoading(false);
     }
@@ -145,6 +178,8 @@ const Index = () => {
         
         if (error) {
           console.error("Database insertion error:", error);
+          console.error("Error details:", JSON.stringify(error, null, 2));
+          toast.error(`Error creating project: ${error.message} (${error.code})`);
           throw error;
         }
         
@@ -155,6 +190,7 @@ const Index = () => {
         await fetchProjects();
       } catch (insertError: any) {
         console.error("Error during insert operation:", insertError);
+        toast.error(`Insert operation failed: ${insertError.message || 'Unknown error'}`);
         throw new Error(`Insert operation failed: ${insertError.message || 'Unknown error'}`);
       }
     } catch (error: any) {
@@ -182,6 +218,19 @@ const Index = () => {
             onAddProject={() => setIsAddProjectModalOpen(true)}
           />
         </div>
+        
+        {fetchError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600">
+            <p className="font-medium">Database Error</p>
+            <p className="text-sm">{fetchError}</p>
+            <button 
+              onClick={fetchProjects} 
+              className="mt-2 text-sm bg-red-100 px-3 py-1 rounded hover:bg-red-200"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         
         <ProjectList 
           projects={filteredProjects}
