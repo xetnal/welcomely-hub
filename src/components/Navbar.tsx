@@ -12,6 +12,7 @@ const Navbar = () => {
   const location = useLocation();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isLoadingRole, setIsLoadingRole] = useState(false);
 
   useEffect(() => {
     // Check for saved theme preference
@@ -32,6 +33,8 @@ const Navbar = () => {
     const fetchUserRole = async () => {
       if (user) {
         try {
+          setIsLoadingRole(true);
+          // Direct query with only the necessary fields to avoid recursion
           const { data, error } = await supabase
             .from('profiles')
             .select('role')
@@ -46,7 +49,11 @@ const Navbar = () => {
           setUserRole(data.role);
         } catch (error) {
           console.error('Error fetching user role:', error);
+        } finally {
+          setIsLoadingRole(false);
         }
+      } else {
+        setUserRole(null);
       }
     };
     
@@ -82,6 +89,10 @@ const Navbar = () => {
       // and this component will unmount
     }
   };
+
+  useEffect(() => {
+    console.log("User role state:", userRole);
+  }, [userRole]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md dark:bg-gray-900 dark:border-gray-800">

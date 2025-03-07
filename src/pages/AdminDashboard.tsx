@@ -66,6 +66,7 @@ const AdminDashboard = () => {
         }
 
         setCurrentUserRole(currentUserData.role);
+        console.log("Current user role:", currentUserData.role);
 
         // Only proceed to fetch all users if current user is Admin
         if (currentUserData.role === 'Admin') {
@@ -79,9 +80,10 @@ const AdminDashboard = () => {
             throw usersError;
           }
 
-          // Get emails for users - removed problematic function call
-          // Instead, we'll use what we have
+          // We can't get emails from auth.users via the client
+          // so we'll just display the profiles without emails
           setUsers(userData);
+          console.log("Fetched users:", userData.length);
         } else {
           // Not an admin, show warning
           toast.error("You don't have admin privileges");
