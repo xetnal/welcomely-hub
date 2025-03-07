@@ -33,7 +33,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
     project.status === 'on-hold' ? 'on-hold' : project.status === 'completed' ? 'completed' : 'active'
   );
 
-  // Update form when project changes
+  // Reset form fields when the modal opens with current project data
   useEffect(() => {
     if (open) {
       setName(project.name);
@@ -68,6 +68,11 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
     };
 
     onEditProject(project.id, updatedProject);
+    onOpenChange(false);
+  };
+
+  // Handle cancel action - ensure the modal closes properly
+  const handleCancel = () => {
     onOpenChange(false);
   };
 
@@ -132,7 +137,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
           <StatusSelect value={status} onChange={setStatus} />
           
           <FormActions 
-            onCancel={() => onOpenChange(false)} 
+            onCancel={handleCancel} 
             submitLabel="Save Changes" 
           />
         </form>
