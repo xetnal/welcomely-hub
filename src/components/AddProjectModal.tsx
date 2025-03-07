@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -61,7 +62,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       name,
       client,
       developer: developer === 'Unassigned' ? 'Unassigned' : developer,
-      manager: manager === 'Unassigned' ? undefined : manager,
+      manager: manager === 'Unassigned' ? null : manager, // Change undefined to null
       startDate: new Date(),
       endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
       status,

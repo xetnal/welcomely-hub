@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PageTransition from '@/components/PageTransition';
 import { Project } from '@/lib/types';
@@ -64,7 +63,7 @@ const Index = () => {
         name: project.name,
         client: project.client,
         developer: project.developer,
-        manager: project.manager || undefined,
+        manager: project.manager || null,
         startDate: new Date(project.start_date),
         endDate: new Date(project.end_date),
         status: project.status,
@@ -109,40 +108,26 @@ const Index = () => {
       
       console.log("Data being sent to Supabase:", projectData);
 
+      // For debugging purposes, let's log more information about the supabase client
+      console.log("Supabase client setup:", !!supabase);
+      
+      // Attempt the insert operation with better error handling
       const { data, error } = await supabase
         .from('projects')
-        .insert(projectData)
-        .select()
-        .single();
-
+        .insert(projectData);
+        
+      console.log("Insert operation completed");
+      
       if (error) {
         console.error("Database error:", error);
         throw error;
       }
       
-      console.log("Project created successfully:", data);
-      
-      // Add new project to state with correct format
-      const addedProject: Project = {
-        id: data.id,
-        name: data.name,
-        client: data.client,
-        developer: data.developer,
-        manager: data.manager || undefined,
-        startDate: new Date(data.start_date),
-        endDate: new Date(data.end_date),
-        status: data.status,
-        description: data.description,
-        tasks: [],
-        completedStages: data.completed_stages || [],
-        user_id: data.user_id
-      };
-      
-      setProjects(prevProjects => [addedProject, ...prevProjects]);
+      console.log("Project created successfully - refreshing projects");
       toast.success('Project created successfully');
       
-      // Refresh projects from database to ensure we have the latest data
-      fetchProjects();
+      // Refresh projects from database
+      await fetchProjects();
     } catch (error: any) {
       toast.error(`Error creating project: ${error.message}`);
       console.error('Error creating project:', error);
