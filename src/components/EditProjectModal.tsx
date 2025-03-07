@@ -73,12 +73,24 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
 
   // Clean close modal function to ensure proper cleanup
   const closeModal = () => {
-    onOpenChange(false);
+    // Force reset UI state after closing
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 0);
   };
 
   return (
-    <Dialog open={open} onOpenChange={closeModal}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-background">
+    <Dialog open={open} onOpenChange={closeModal} modal={true}>
+      <DialogContent 
+        className="sm:max-w-[500px] p-0 overflow-hidden bg-background"
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          closeModal();
+        }}
+      >
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">Edit Project</DialogTitle>
         </DialogHeader>

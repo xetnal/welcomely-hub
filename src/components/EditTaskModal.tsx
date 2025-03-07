@@ -61,16 +61,32 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     };
 
     onEditTask(task.id, updatedTask);
-    onOpenChange(false);
+    closeModal();
     toast.success('Task updated successfully');
   };
 
+  // Safe close modal function
+  const closeModal = () => {
+    // Force reset UI state after closing
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 0);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-background">
+    <Dialog open={open} onOpenChange={closeModal} modal={true}>
+      <DialogContent 
+        className="sm:max-w-[500px] p-0 overflow-hidden bg-background"
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          closeModal();
+        }}
+      >
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">Edit Task</DialogTitle>
-          {/* Removed the duplicate close button here */}
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6 pt-2">
@@ -115,7 +131,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           </div>
           
           <FormActions 
-            onCancel={() => onOpenChange(false)} 
+            onCancel={closeModal} 
             submitLabel="Save Changes" 
           />
         </form>

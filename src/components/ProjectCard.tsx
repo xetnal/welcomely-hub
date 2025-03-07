@@ -36,7 +36,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
     }
   };
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only navigate if the click was directly on the card (not on dropdown)
     navigate(`/project/${project.id}`);
   };
 
@@ -76,7 +77,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
               <DropdownMenuItem 
                 onClick={handleEditClick}
                 onSelect={(e) => e.preventDefault()}
