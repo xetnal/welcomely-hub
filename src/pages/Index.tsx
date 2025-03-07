@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Search, Plus, Filter } from 'lucide-react';
@@ -17,11 +18,23 @@ const Index = () => {
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [fetchTimedOut, setFetchTimedOut] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
       fetchProjects();
+      
+      // Set a timeout to show "no projects" message if fetch takes too long
+      const timeoutId = setTimeout(() => {
+        if (loading && projects.length === 0) {
+          console.log('Fetch timed out after 5 seconds');
+          setFetchTimedOut(true);
+          setLoading(false);
+        }
+      }, 5000);
+      
+      return () => clearTimeout(timeoutId);
     } else {
       setLoading(false);
     }
@@ -30,6 +43,7 @@ const Index = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
+      setFetchTimedOut(false);
       console.log('Fetching projects...');
       
       const { data, error } = await supabase
@@ -175,7 +189,7 @@ const Index = () => {
           </div>
         </div>
         
-        {loading ? (
+        {loading && !fetchTimedOut ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
@@ -189,7 +203,9 @@ const Index = () => {
           <div className="text-center p-12 bg-muted/20 rounded-lg border border-dashed">
             <h3 className="text-lg font-medium mb-2">No projects found</h3>
             <p className="text-muted-foreground mb-4">
-              {searchQuery ? 'No projects match your search criteria' : 'You have not created any projects yet'}
+              {searchQuery ? 'No projects match your search criteria' : fetchTimedOut ? 
+                'No projects found. Please create your first project.' : 
+                'You have not created any projects yet'}
             </p>
             <Button onClick={() => setIsAddProjectModalOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
