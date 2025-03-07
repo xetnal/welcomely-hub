@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Loader2, WifiOff, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Loader2, WifiOff, AlertCircle, CheckCircle, RefreshCw, Database } from 'lucide-react';
 
 interface ConnectionStatusProps {
   status: 'checking' | 'connected' | 'error';
@@ -20,7 +20,7 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
       <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-600">
         <div className="flex items-center">
           <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-          <p>Testing connection to Supabase...</p>
+          <p>Testing connection to Supabase database...</p>
         </div>
       </div>
     );
@@ -40,6 +40,8 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   if (error) {
     // Determine if it's a path/URL error
     const isPathError = error.toLowerCase().includes('path') || error.toLowerCase().includes('url') || error.toLowerCase().includes('invalid');
+    const isAuthError = error.toLowerCase().includes('auth') || error.toLowerCase().includes('permission') || error.toLowerCase().includes('access');
+    const isTimeoutError = error.toLowerCase().includes('timeout') || error.toLowerCase().includes('time out');
     
     return (
       <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
@@ -56,6 +58,18 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
               Check that your Supabase credentials are correct.
             </span>
           )}
+          {isAuthError && (
+            <span className="block mt-2 text-xs">
+              This could be an authentication or permission issue. 
+              Check that your Supabase key has the necessary permissions.
+            </span>
+          )}
+          {isTimeoutError && (
+            <span className="block mt-2 text-xs">
+              This could indicate network issues or that the Supabase service is temporarily unavailable.
+              Try again later or check your network connection.
+            </span>
+          )}
         </p>
         
         <div className="flex space-x-3">
@@ -63,7 +77,7 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
             onClick={onRetryConnection} 
             className="flex items-center text-sm bg-red-100 px-3 py-1.5 rounded hover:bg-red-200 transition-colors"
           >
-            <WifiOff className="h-4 w-4 mr-1.5" />
+            <Database className="h-4 w-4 mr-1.5" />
             Test Connection
           </button>
           <button 
