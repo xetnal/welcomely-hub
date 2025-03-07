@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PageTransition from '@/components/PageTransition';
 import { Project } from '@/lib/types';
@@ -44,10 +45,13 @@ const Index = () => {
       setLoading(true);
       setFetchTimedOut(false);
       console.log('Fetching projects...');
+      console.log('Current user ID:', user?.id);
       
+      // Explicitly fetch only projects that belong to the current user
       const { data, error } = await supabase
         .from('projects')
         .select('*')
+        .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -56,6 +60,7 @@ const Index = () => {
       }
 
       console.log('Projects fetched:', data);
+      console.log('Number of projects:', data?.length || 0);
 
       // Transform the data to match our Project type
       const transformedProjects: Project[] = data ? data.map(project => ({
