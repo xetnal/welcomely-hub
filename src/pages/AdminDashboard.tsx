@@ -64,8 +64,8 @@ const AdminDashboard = () => {
         setCurrentUserRole(currentUserRoleData);
         console.log("Current user role:", currentUserRoleData);
 
-        // Only proceed to fetch all users if current user is Admin
-        if (currentUserRoleData === 'Admin') {
+        // Only proceed to fetch all users if current user is Admin (case-insensitive check)
+        if (currentUserRoleData?.toLowerCase() === 'admin') {
           // Fetch profiles with user roles
           const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
@@ -96,6 +96,9 @@ const AdminDashboard = () => {
       fetchUsers();
     }
   }, [user]);
+
+  // Create a memoized isAdmin value for checking admin status
+  const isAdmin = currentUserRole?.toLowerCase() === 'admin';
 
   const handleRoleChange = (userId: string, newRole: string) => {
     setPendingChanges((prev) => ({
@@ -159,7 +162,7 @@ const AdminDashboard = () => {
     );
   }
 
-  if (currentUserRole !== 'Admin') {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex flex-col dark:bg-gray-900">
         <Navbar />
