@@ -23,7 +23,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Helper function to ensure user has a proper profile
   const ensureProfileExists = async (userId: string, fullName: string) => {
     try {
       console.log("Ensuring profile exists for user:", userId, fullName);
@@ -35,7 +34,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Check for active session on mount
     const checkSession = async () => {
       try {
         setLoading(true);
@@ -47,7 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // If we have a user, ensure they have a profile record
         if (session?.user) {
           const fullName = session.user.user_metadata?.full_name || 'User';
           console.log("Session user found, ensuring profile exists:", fullName);
@@ -62,14 +59,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkSession();
 
-    // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         console.log("Auth state changed, event:", _event);
         setSession(session);
         setUser(session?.user ?? null);
         
-        // If we have a user, ensure they have a profile record
         if (session?.user) {
           const fullName = session.user.user_metadata?.full_name || 'User';
           console.log("Auth change user found, ensuring profile exists:", fullName);
@@ -100,8 +95,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log("User signed up successfully:", data);
       
-      // Profiles are created automatically via database trigger
-      // But we still call this to ensure the profile has the correct data
       if (data.user) {
         console.log("Ensuring profile for new user:", data.user.id, fullName);
         const profile = await ensureProfileExists(data.user.id, fullName);
@@ -145,24 +138,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      setLoading(true); // Set loading to true during sign out
-      
-      // First, clear the local state regardless of API call success
+      setLoading(true);
       setUser(null);
       setSession(null);
       
       try {
-        // Now attempt to sign out with Supabase
         const { error } = await supabase.auth.signOut();
         
         if (error) {
           console.error("Error during sign out:", error);
-          // Even if there's an error, we've already cleared the local state
         }
       } catch (error: any) {
-        // This catch block handles cases where the session might not exist
         console.error("Error during sign out:", error);
-        // We've already cleared the local state, so we can continue
       }
       
       toast({
@@ -170,7 +157,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "You have been signed out successfully",
       });
       
-      // Redirect to auth page after successful sign out
       navigate('/auth');
     } catch (error: any) {
       toast({
@@ -179,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive",
       });
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
