@@ -18,10 +18,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   },
   global: {
-    fetch: (...args) => {
+    fetch: (url: RequestInfo | URL, init?: RequestInit) => {
       // Log fetch operations in development
-      console.log('Supabase fetch operation:', args[0]);
-      return fetch(...args);
+      console.log('Supabase fetch operation:', url);
+      return fetch(url, init);
     },
   },
 });

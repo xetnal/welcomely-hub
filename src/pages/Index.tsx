@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PageTransition from '@/components/PageTransition';
 import { Project } from '@/lib/types';
@@ -77,7 +78,7 @@ const Index = () => {
   };
 
   const fetchProjects = async () => {
-    if (!connectionStatus === 'connected') {
+    if (connectionStatus !== 'connected') {
       console.log('Not fetching projects because connection is not established');
       return;
     }
