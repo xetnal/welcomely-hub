@@ -115,7 +115,7 @@ const Index = () => {
         console.log("Attempting insert operation...");
         
         // Set a timeout to detect hangs
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error("Insert operation timed out after 10 seconds")), 10000)
         );
         
@@ -127,7 +127,7 @@ const Index = () => {
         const result = await Promise.race([insertResultPromise, timeoutPromise]);
         console.log("Insert operation completed, result:", result);
         
-        if ('error' in result && result.error) {
+        if (result && 'error' in result && result.error) {
           console.error("Database insertion error:", result.error);
           throw result.error;
         }
