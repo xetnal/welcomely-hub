@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PageTransition from '@/components/PageTransition';
 import { Project } from '@/lib/types';
@@ -41,6 +42,18 @@ const Index = () => {
       setFetchTimedOut(false);
       console.log('Fetching all projects...');
       
+      // First, let's check if the projects table exists and has data
+      const { count, error: countError } = await supabase
+        .from('projects')
+        .select('*', { count: 'exact', head: true });
+      
+      console.log('Total projects in the database:', count);
+      
+      if (countError) {
+        console.error('Error checking project count:', countError);
+        throw countError;
+      }
+      
       // Fetch all projects without filtering by user_id
       const { data, error } = await supabase
         .from('projects')
@@ -54,6 +67,18 @@ const Index = () => {
 
       console.log('Projects fetched:', data);
       console.log('Number of projects:', data?.length || 0);
+      
+      // Log details of each project for debugging
+      data?.forEach((project, index) => {
+        console.log(`Project ${index + 1}:`, {
+          id: project.id,
+          name: project.name,
+          client: project.client,
+          developer: project.developer,
+          created_at: project.created_at,
+          user_id: project.user_id
+        });
+      });
 
       // Transform the data to match our Project type
       const transformedProjects: Project[] = data ? data.map(project => ({
