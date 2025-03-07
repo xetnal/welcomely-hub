@@ -2,14 +2,13 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
 
-interface ProtectedRouteProps {
+interface AdminRouteProps {
   children: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
+  const { user, profile, loading, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -19,12 +18,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  if (!user) {
-    toast.error('Please login to access this page');
-    return <Navigate to="/auth" replace />;
+  if (!user || !isAdmin) {
+    toast.error('You do not have permission to access this page');
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 };
 
-export default ProtectedRoute;
+export default AdminRoute;

@@ -9,8 +9,10 @@ import Index from "./pages/Index";
 import ProjectDetails from "./pages/ProjectDetails";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import UserManagement from "./pages/UserManagement";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,14 @@ const App = () => (
                   <ProtectedRoute>
                     <ProjectDetails />
                   </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users" 
+                element={
+                  <AdminRoute>
+                    <UserManagement />
+                  </AdminRoute>
                 } 
               />
               <Route path="*" element={<NotFound />} />

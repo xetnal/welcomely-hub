@@ -13,6 +13,10 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
+  isAdmin: boolean;
+  isManager: boolean;
+  isDeveloper: boolean;
+  isClient: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +27,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Role-based flags
+  const isAdmin = profile?.role === 'admin';
+  const isManager = profile?.role === 'manager';
+  const isDeveloper = profile?.role === 'developer';
+  const isClient = profile?.role === 'client';
 
   useEffect(() => {
     const getSession = async () => {
@@ -125,7 +135,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, signUp, signIn, signOut, loading }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      profile, 
+      signUp, 
+      signIn, 
+      signOut, 
+      loading,
+      isAdmin,
+      isManager,
+      isDeveloper,
+      isClient
+    }}>
       {children}
     </AuthContext.Provider>
   );
