@@ -44,7 +44,7 @@ const Home = () => {
             transition={{ duration: 0.5 }}
             className="text-center mb-16"
           >
-            <h1 className="text-4xl font-bold mb-4">Workflow Hub</h1>
+            <h1 className="text-4xl font-bold mb-4">Welcomely Hub</h1>
             <p className="text-xl text-muted-foreground dark:text-gray-400">
               Your all-in-one project management solution
             </p>
