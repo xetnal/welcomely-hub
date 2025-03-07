@@ -15,6 +15,8 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [activeTab, setActiveTab] = useState('login');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [signupLoading, setSignupLoading] = useState(false);
   const navigate = useNavigate();
 
   // Redirect to dashboard if already logged in
@@ -24,14 +26,24 @@ const Auth = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signIn(email, password);
-    // Navigate is handled by the AuthContext after successful login
+    setLoginLoading(true);
+    try {
+      await signIn(email, password);
+      // Navigate is handled by the AuthContext after successful login
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signUp(email, password, fullName);
-    // Navigate is handled by the AuthContext after successful signup
+    setSignupLoading(true);
+    try {
+      await signUp(email, password, fullName);
+      // Navigate is handled by the AuthContext after successful signup
+    } finally {
+      setSignupLoading(false);
+    }
   };
 
   return (
@@ -97,8 +109,8 @@ const Auth = () => {
                 </CardContent>
                 
                 <CardFooter>
-                  <Button className="w-full" type="submit" disabled={loading}>
-                    {loading ? 'Logging in...' : 'Login'}
+                  <Button className="w-full" type="submit" disabled={loginLoading}>
+                    {loginLoading ? 'Logging in...' : 'Login'}
                   </Button>
                 </CardFooter>
               </form>
@@ -144,8 +156,8 @@ const Auth = () => {
                 </CardContent>
                 
                 <CardFooter>
-                  <Button className="w-full" type="submit" disabled={loading}>
-                    {loading ? 'Creating account...' : 'Create account'}
+                  <Button className="w-full" type="submit" disabled={signupLoading}>
+                    {signupLoading ? 'Creating account...' : 'Create account'}
                   </Button>
                 </CardFooter>
               </form>

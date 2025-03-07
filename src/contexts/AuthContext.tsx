@@ -36,27 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user || null);
-      
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-          
-        setProfile(profile);
-      }
-      
-      setLoading(false);
-    };
-
-    getSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user || null);
         
@@ -68,11 +49,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
             
           setProfile(profile);
-        } else {
-          setProfile(null);
         }
-        
+      } catch (error) {
+        console.error("Error getting session:", error);
+      } finally {
         setLoading(false);
+      }
+    };
+
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        try {
+          setSession(session);
+          setUser(session?.user || null);
+          
+          if (session?.user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+              
+            setProfile(profile);
+          } else {
+            setProfile(null);
+          }
+        } catch (error) {
+          console.error("Auth state change error:", error);
+        } finally {
+          setLoading(false);
+        }
       }
     );
 
@@ -83,7 +91,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -99,14 +106,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       navigate('/auth', { replace: true });
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
-    } finally {
-      setLoading(false);
+      throw error; // Rethrow so the Auth component can handle it
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) throw error;
@@ -114,14 +119,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       navigate('/dashboard', { replace: true });
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
-    } finally {
-      setLoading(false);
+      throw error; // Rethrow so the Auth component can handle it
     }
   };
 
   const signOut = async () => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signOut();
       
       if (error) throw error;
@@ -129,8 +132,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Logged out successfully');
     } catch (error: any) {
       toast.error(error.message || 'Error signing out');
-    } finally {
-      setLoading(false);
     }
   };
 
