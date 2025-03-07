@@ -1,12 +1,14 @@
 
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, LogOut, LogIn } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     // Check for saved theme preference
@@ -89,12 +91,30 @@ const Navbar = () => {
           </Button>
           
           <div className="hidden md:flex items-center gap-4">
-            <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400">
-              Settings
-            </a>
-            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center dark:bg-primary/30 text-primary-foreground">
-              <span className="text-xs font-medium">JD</span>
-            </div>
+            {user ? (
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400"
+                  onClick={signOut}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center dark:bg-primary/30 text-primary-foreground">
+                  <span className="text-xs font-medium">
+                    {user.email ? user.email.substring(0, 2).toUpperCase() : ""}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <Button asChild variant="default">
+                <Link to="/auth">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>
