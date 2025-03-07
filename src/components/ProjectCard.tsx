@@ -31,6 +31,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation to project details
+    e.stopPropagation(); // Stop event from bubbling up to parent Link
     onEditProject(project);
   };
 
@@ -60,7 +61,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
                 <Pencil className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-2" align="end">
+            <PopoverContent className="w-auto p-2" align="end" onClick={(e) => e.stopPropagation()}>
               <Button 
                 size="sm" 
                 variant="ghost"
