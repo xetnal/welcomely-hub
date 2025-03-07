@@ -34,12 +34,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // If user is not authenticated after loading or timeout, redirect to login page
   if (!user) {
-    console.log("Not authenticated, redirecting to auth page", { from: location });
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    console.log("Not authenticated, redirecting to auth page", { from: location.pathname });
+    return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
   }
 
   // If user is authenticated, render the protected content
-  console.log("User authenticated, showing protected content");
+  console.log("User authenticated, showing protected content", { userId: user.id });
   return <>{children}</>;
 };
 

@@ -78,14 +78,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(true);
         
         try {
-          setSession(newSession);
-          setUser(newSession?.user ?? null);
-          
-          // If we have a user, ensure they have a profile record
-          if (newSession?.user) {
-            const fullName = newSession.user.user_metadata?.full_name || 'User';
-            console.log("Auth change user found, ensuring profile exists:", fullName);
-            await ensureProfileExists(newSession.user.id, fullName);
+          if (event === 'SIGNED_OUT') {
+            console.log("User signed out, clearing state");
+            setUser(null);
+            setSession(null);
+          } else {
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+            
+            // If we have a user, ensure they have a profile record
+            if (newSession?.user) {
+              const fullName = newSession.user.user_metadata?.full_name || 'User';
+              console.log("Auth change user found, ensuring profile exists:", fullName);
+              await ensureProfileExists(newSession.user.id, fullName);
+            }
           }
         } catch (error) {
           console.error("Error during auth state change handling:", error);
@@ -159,6 +165,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Welcome back",
         description: "You have successfully signed in",
       });
+
+      // Navigate to projects page after successful sign in
+      navigate('/projects');
     } catch (error: any) {
       console.error("Error during sign in:", error);
       
@@ -178,16 +187,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Signing out...");
       setLoading(true);
       
-      // Clear state first for better UX
-      setUser(null);
-      setSession(null);
-      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("Error during sign out from Supabase:", error);
         throw error;
       }
+      
+      // Clear state AFTER successful sign out
+      setUser(null);
+      setSession(null);
       
       console.log("Signed out successfully");
       
@@ -198,6 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Navigate to auth page after successful sign out
       navigate('/auth');
+      return Promise.resolve();
     } catch (error: any) {
       console.error("Error during sign out:", error);
       
@@ -206,6 +216,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
+      return Promise.reject(error);
     } finally {
       setLoading(false);
     }

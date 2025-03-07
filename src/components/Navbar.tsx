@@ -29,12 +29,12 @@ const Navbar = () => {
     }
   }, []);
 
-  // Reset signing out state when user changes
+  // Reset signing out state when user changes or when loading completes
   useEffect(() => {
-    if (!user) {
+    if (!user || !loading) {
       setIsSigningOut(false);
     }
-  }, [user]);
+  }, [user, loading]);
 
   const toggleDarkMode = () => {
     if (isDarkMode) {
@@ -53,9 +53,13 @@ const Navbar = () => {
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
+    console.log("Attempting to sign out");
     setIsSigningOut(true);
     try {
       await signOut();
+      console.log("Sign out successful");
+      // Navigate after successful sign out
+      navigate('/auth');
     } catch (error) {
       console.error("Sign out error:", error);
       setIsSigningOut(false);
@@ -145,7 +149,7 @@ const Navbar = () => {
                   variant="ghost" 
                   className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary dark:text-gray-400"
                   onClick={handleSignOut}
-                  disabled={isSigningOut || loading}
+                  disabled={isSigningOut}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   {isSigningOut ? "Signing out..." : "Sign Out"}
