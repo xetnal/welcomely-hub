@@ -11,26 +11,69 @@ console.log('Initializing Supabase client:');
 console.log('URL:', SUPABASE_URL);
 console.log('Key exists:', !!SUPABASE_PUBLISHABLE_KEY);
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Create the Supabase client
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+  global: {
+    fetch: (...args) => {
+      // Log fetch operations in development
+      console.log('Supabase fetch operation:', args[0]);
+      return fetch(...args);
+    },
+  },
+});
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
-// Add a function to test connection (we'll create this on the DB side)
-// Check if the supabase client is working
-// Fix TypeScript error by explicitly handling the Promise
-const testConnection = async () => {
+// Function to test the Supabase connection
+export const testConnection = async (): Promise<boolean> => {
   try {
+    console.log('Testing Supabase connection with ping_db function...');
     const { data, error } = await supabase.rpc('ping_db');
+    
     if (error) {
-      console.error('Supabase client initialization error (in ping test):', error);
-    } else {
-      console.log('Supabase client initialized successfully:', data);
+      console.error('Supabase ping_db test failed:', error);
+      return false;
     }
+    
+    console.log('Supabase connection successful:', data);
+    return true;
   } catch (err) {
     console.error('Exception in Supabase ping test:', err);
+    return false;
   }
 };
 
-// Execute the test connection function
-testConnection();
+// Export a function to fetch projects that can be used directly
+export const fetchProjects = async () => {
+  console.log('Fetching projects from Supabase...');
+  try {
+    const { data, error, status } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    console.log('Projects fetch status:', status);
+    
+    if (error) {
+      console.error('Error fetching projects:', error);
+      throw error;
+    }
+    
+    console.log('Projects fetched successfully, count:', data?.length || 0);
+    return data || [];
+  } catch (err) {
+    console.error('Exception in fetchProjects:', err);
+    throw err;
+  }
+};
+
+// Run an initial connection test
+testConnection().then(success => {
+  if (success) {
+    console.log('Initial Supabase connection test passed');
+  } else {
+    console.warn('Initial Supabase connection test failed');
+  }
+});

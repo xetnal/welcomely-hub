@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import PageTransition from '@/components/PageTransition';
 import { Project } from '@/lib/types';
 import Navbar from '@/components/Navbar';
 import AddProjectModal from '@/components/AddProjectModal';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, fetchProjects as supabaseFetchProjects } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-// Import new components
+// Import components
 import ProjectHeader from '@/components/dashboard/ProjectHeader';
 import ProjectSearch from '@/components/dashboard/ProjectSearch';
 import ProjectList from '@/components/dashboard/ProjectList';
@@ -24,12 +23,7 @@ const Index = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    console.log('Index component mounted, checking Supabase connection...');
-    // Don't use protected property supabaseUrl
-    console.log('Supabase client initialized:', !!supabase);
-    
-    // Check Supabase connection
-    checkSupabaseConnection();
+    console.log('Index component mounted, user status:', user ? 'logged in' : 'not logged in');
     
     // Set a timeout to show "no projects" message if fetch takes too long
     const timeoutId = setTimeout(() => {
@@ -40,136 +34,67 @@ const Index = () => {
       }
     }, 5000);
     
+    // Check connection and fetch projects
+    checkSupabaseConnection();
+    
     return () => clearTimeout(timeoutId);
   }, []);
+
+  // Check if we should refetch projects when user changes
+  useEffect(() => {
+    if (user && connectionStatus === 'connected') {
+      console.log('User changed, refetching projects...');
+      fetchProjects();
+    }
+  }, [user, connectionStatus]);
 
   const checkSupabaseConnection = async () => {
     console.log('Testing Supabase connection...');
     setConnectionStatus('checking');
     
     try {
-      console.log('Making API request to Supabase...');
+      // Simple query to check connection
+      const { data, error } = await supabase
+        .from('projects')
+        .select('count', { count: 'exact', head: true });
       
-      // Try a very simple query first to test the connection
-      const { data: pingData, error: pingError } = await supabase.rpc('ping_db');
-      
-      if (pingError) {
-        console.error('Ping DB function failed:', pingError);
-        // If ping fails, try the count query as a backup
-        tryCountQuery();
+      if (error) {
+        console.error('Connection test failed:', error);
+        setConnectionStatus('error');
+        setFetchError(`Connection error: ${error.message}`);
+        toast.error(`Database connection error: ${error.message}`);
       } else {
-        console.log('Ping successful:', pingData);
+        console.log('Connection test successful');
         setConnectionStatus('connected');
         fetchProjects();
       }
     } catch (error: any) {
       console.error('Unexpected error in connection test:', error);
-      // If an exception occurred, try the count query as a backup
-      tryCountQuery();
-    }
-  };
-  
-  const tryCountQuery = async () => {
-    try {
-      console.log('Trying count query as fallback...');
-      // Simple count query to check connection
-      const { count, error } = await supabase
-        .from('projects')
-        .select('*', { count: 'exact', head: true });
-      
-      if (error) {
-        console.error('Supabase connection test failed:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        setConnectionStatus('error');
-        setFetchError(`Connection error: ${error.message} (${error.code})`);
-        toast.error(`Supabase connection error: ${error.message}`);
-      } else {
-        console.log('Count query successful, projects count:', count);
-        setConnectionStatus('connected');
-        fetchProjects();
-      }
-    } catch (error: any) {
-      console.error('Unexpected error in count query:', error);
-      console.error('Error object:', JSON.stringify(error, null, 2));
       setConnectionStatus('error');
-      setFetchError(`Unexpected connection error: ${error.message}`);
+      setFetchError(`Unexpected error: ${error.message}`);
       toast.error(`Connection error: ${error.message}`);
     }
   };
 
   const fetchProjects = async () => {
+    if (!connectionStatus === 'connected') {
+      console.log('Not fetching projects because connection is not established');
+      return;
+    }
+    
     try {
       setLoading(true);
       setFetchTimedOut(false);
       setFetchError(null);
-      console.log('Fetching all projects...');
+      console.log('Fetching projects...');
       
-      // Try a simpler query first
-      try {
-        console.log('Testing with a simple query first...');
-        const { data: testData, error: testError } = await supabase
-          .from('projects')
-          .select('id')
-          .limit(1);
-          
-        if (testError) {
-          console.error('Simple test query failed:', testError);
-          throw testError;
-        }
-        
-        console.log('Simple test query succeeded:', testData);
-      } catch (testError: any) {
-        console.error('Test query error:', testError);
-      }
+      // Use the fetchProjects function from client.ts
+      const projectData = await supabaseFetchProjects();
       
-      // First, let's check if the projects table exists and has data
-      console.log('Checking project count...');
-      const { count, error: countError } = await supabase
-        .from('projects')
-        .select('*', { count: 'exact', head: true });
+      console.log('Projects fetched, transforming data');
       
-      console.log('Total projects in the database:', count);
-      
-      if (countError) {
-        console.error('Error checking project count:', countError);
-        console.error('Count error details:', JSON.stringify(countError, null, 2));
-        setFetchError(`Count error: ${countError.message} (${countError.code})`);
-        toast.error(`Error checking project count: ${countError.message}`);
-        throw countError;
-      }
-      
-      // Fetch all projects without filtering by user_id
-      console.log('Attempting to fetch all projects with full query...');
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching projects:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        setFetchError(`Fetch error: ${error.message} (${error.code})`);
-        toast.error(`Error fetching projects: ${error.message}`);
-        throw error;
-      }
-
-      console.log('Projects fetched:', data);
-      console.log('Number of projects:', data?.length || 0);
-      
-      // Log details of each project for debugging
-      data?.forEach((project, index) => {
-        console.log(`Project ${index + 1}:`, {
-          id: project.id,
-          name: project.name,
-          client: project.client,
-          developer: project.developer,
-          created_at: project.created_at,
-          user_id: project.user_id
-        });
-      });
-
       // Transform the data to match our Project type
-      const transformedProjects: Project[] = data ? data.map(project => ({
+      const transformedProjects: Project[] = projectData.map(project => ({
         id: project.id,
         name: project.name,
         client: project.client,
@@ -182,11 +107,12 @@ const Index = () => {
         tasks: [],
         completedStages: project.completed_stages || [],
         user_id: project.user_id
-      })) : [];
+      }));
 
+      console.log('Setting projects state with', transformedProjects.length, 'projects');
       setProjects(transformedProjects);
     } catch (error: any) {
-      console.error('Detailed error fetching projects:', error);
+      console.error('Error fetching projects:', error);
       setFetchError(`Error: ${error.message}`);
       toast.error(`Error fetching projects: ${error.message}`);
     } finally {
@@ -209,7 +135,7 @@ const Index = () => {
         name: newProject.name,
         client: newProject.client,
         developer: newProject.developer,
-        manager: newProject.manager || null, // Ensure null instead of undefined
+        manager: newProject.manager || null,
         description: newProject.description || `Project for ${newProject.client}`,
         start_date: newProject.startDate.toISOString(),
         end_date: newProject.endDate.toISOString(),
@@ -220,35 +146,22 @@ const Index = () => {
       
       console.log("Data being sent to Supabase:", projectData);
       
-      // Simplify the insert operation to reduce potential issues
-      try {
-        console.log("Starting insert operation...");
-        
-        // Direct insert without race condition
-        const { data, error } = await supabase
-          .from('projects')
-          .insert(projectData)
-          .select();
-        
-        console.log("Insert operation completed");
-        
-        if (error) {
-          console.error("Database insertion error:", error);
-          console.error("Error details:", JSON.stringify(error, null, 2));
-          toast.error(`Error creating project: ${error.message} (${error.code})`);
-          throw error;
-        }
-        
-        console.log("Project created successfully - result:", data);
-        toast.success('Project created successfully');
-        
-        // Refresh projects from database
-        await fetchProjects();
-      } catch (insertError: any) {
-        console.error("Error during insert operation:", insertError);
-        toast.error(`Insert operation failed: ${insertError.message || 'Unknown error'}`);
-        throw new Error(`Insert operation failed: ${insertError.message || 'Unknown error'}`);
+      const { data, error } = await supabase
+        .from('projects')
+        .insert(projectData)
+        .select();
+      
+      if (error) {
+        console.error("Database insertion error:", error);
+        toast.error(`Error creating project: ${error.message}`);
+        throw error;
       }
+      
+      console.log("Project created successfully - result:", data);
+      toast.success('Project created successfully');
+      
+      // Refresh projects from database
+      await fetchProjects();
     } catch (error: any) {
       toast.error(`Error creating project: ${error.message}`);
       console.error('Error creating project:', error);
