@@ -11,7 +11,7 @@ export interface Employee {
 export const fetchEmployees = async (): Promise<Employee[]> => {
   try {
     const { data, error } = await supabase
-      .from('employees')
+      .from('profiles')
       .select('id, full_name, avatar_url')
       .limit(100);
     
