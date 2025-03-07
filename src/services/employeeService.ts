@@ -17,33 +17,8 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
       return [];
     }
     
-    // First try to fetch from profiles table directly instead of employees
-    // This ensures we get the most up-to-date data with correct names
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, full_name, avatar_url')
-      .limit(100);
-    
-    if (profilesError) {
-      console.error("Error fetching profiles:", profilesError);
-      throw profilesError;
-    }
-    
-    if (profiles && profiles.length > 0) {
-      console.log("Fetched profiles:", profiles);
-      
-      // Map profiles to employee format
-      const employeesFromProfiles = profiles.map(profile => ({
-        id: profile.id,
-        full_name: profile.full_name || 'Unknown User',
-        avatar_url: profile.avatar_url
-      }));
-      
-      return employeesFromProfiles;
-    }
-    
-    // Fallback: if no profiles found, try employees table
-    const { data: employees, error } = await supabase
+    // First try to fetch from employees table
+    let { data: employees, error } = await supabase
       .from('employees')
       .select('id, full_name, avatar_url')
       .limit(100);
@@ -51,6 +26,59 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
     if (error) {
       console.error("Error fetching employees:", error);
       throw error;
+    }
+    
+    // If no employees found or empty array, try to fetch from profiles and create employees
+    if (!employees || employees.length === 0) {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url');
+      
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
+      
+      if (profiles && profiles.length > 0) {
+        // Create employees from profiles if they don't exist yet
+        const employeeInserts = profiles.map(profile => ({
+          id: profile.id,
+          full_name: profile.full_name || 'Unknown User',
+          avatar_url: profile.avatar_url,
+          user_id: profile.id
+        }));
+        
+        // Only proceed with upsert if there are profiles to insert
+        if (employeeInserts.length > 0) {
+          const { data: insertedEmployees, error: insertError } = await supabase
+            .from('employees')
+            .upsert(employeeInserts, { onConflict: 'id' })
+            .select();
+          
+          if (insertError) {
+            console.error('Error creating employees:', insertError);
+            // Even if insert fails, return the profiles data anyway
+            return profiles.map(profile => ({
+              id: profile.id,
+              full_name: profile.full_name || 'Unknown User',
+              avatar_url: profile.avatar_url
+            }));
+          }
+        }
+        
+        // Fetch the updated employees list
+        const { data: updatedEmployees, error: fetchError } = await supabase
+          .from('employees')
+          .select('id, full_name, avatar_url')
+          .limit(100);
+        
+        if (fetchError) {
+          console.error("Error fetching updated employees:", fetchError);
+          throw fetchError;
+        }
+        
+        employees = updatedEmployees;
+      }
     }
     
     console.log("Fetched employees:", employees);
@@ -67,41 +95,32 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
 
 export const createEmployeeFromUser = async (userId: string, fullName: string): Promise<void> => {
   try {
-    // Check if user profile already exists
-    const { data: existingProfile } = await supabase
-      .from('profiles')
+    // Check if employee already exists
+    const { data: existingEmployee } = await supabase
+      .from('employees')
       .select('id')
       .eq('id', userId)
       .single();
       
-    if (existingProfile) {
-      console.log("Profile already exists:", userId);
-      // Update the profile with the current name if needed
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ full_name: fullName })
-        .eq('id', userId);
-        
-      if (updateError) {
-        console.error('Error updating profile name:', updateError);
-      }
+    if (existingEmployee) {
+      console.log("Employee already exists:", userId);
       return;
     }
     
-    // If profile doesn't exist, create it
     const { error } = await supabase
-      .from('profiles')
+      .from('employees')
       .upsert({
         id: userId,
-        full_name: fullName
+        full_name: fullName,
+        user_id: userId
       }, { onConflict: 'id' });
     
     if (error) {
-      console.error('Error creating profile from user:', error);
+      console.error('Error creating employee from user:', error);
       throw error;
     }
     
-    console.log("Created profile from user:", userId);
+    console.log("Created employee from user:", userId);
   } catch (error: any) {
     console.error('Error in createEmployeeFromUser:', error);
     // Only show toast for actual errors, not on page refresh

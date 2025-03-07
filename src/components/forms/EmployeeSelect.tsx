@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,23 +34,10 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
         setIsLoading(true);
         setError(null);
         const employeeData = await fetchEmployees();
-        
-        // Create a Map to de-duplicate employees by name
-        // This will keep only one employee per unique name
-        const uniqueEmployeeMap = new Map<string, Employee>();
-        
-        employeeData.forEach(employee => {
-          const fullName = employee.full_name || 'Unknown User';
-          // If we haven't seen this name before, or we want to prioritize a specific entry
-          if (!uniqueEmployeeMap.has(fullName)) {
-            uniqueEmployeeMap.set(fullName, employee);
-          }
-        });
-        
-        // Convert the Map values back to an array
-        const uniqueEmployees = Array.from(uniqueEmployeeMap.values());
-        
-        console.log("Filtered unique employees by name:", uniqueEmployees);
+        // Make sure we have unique employees by ID
+        const uniqueEmployees = Array.from(
+          new Map(employeeData.map(employee => [employee.id, employee])).values()
+        );
         setEmployees(uniqueEmployees);
       } catch (err) {
         console.error("Error loading employees:", err);
