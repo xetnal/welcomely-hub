@@ -11,6 +11,15 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  // Add a timeout to avoid infinite loading if auth check takes too long
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log("Auth check timed out, continuing as unauthenticated");
+    }, 5000); // 5 seconds timeout
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   // If authentication is still loading, show a loading state
   if (loading) {
     return (
