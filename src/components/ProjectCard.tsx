@@ -3,11 +3,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Project } from '@/lib/types';
 import { format } from 'date-fns';
-import { CalendarDays, User, Users, Pencil } from 'lucide-react';
+import { CalendarDays, User, Users, MoreHorizontal } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface ProjectCardProps {
   project: Project;
@@ -35,6 +40,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
     onEditProject(project);
   };
 
+  const handleViewDetailsClick = (e: React.MouseEvent) => {
+    // Allow normal navigation without prevention
+    // This is handled by the Link component
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -45,33 +55,30 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
         ease: [0.22, 1, 0.36, 1]
       }}
     >
-      <Link 
-        to={`/project/${project.id}`} 
-        className="block glass card-hover rounded-xl overflow-hidden relative"
-      >
+      <div className="block glass card-hover rounded-xl overflow-hidden relative">
         <div className="absolute top-2 right-2 z-10">
-          <Popover>
-            <PopoverTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button 
                 size="icon" 
                 variant="ghost" 
                 className="h-8 w-8 rounded-full hover:bg-black/10"
                 onClick={(e) => e.stopPropagation()}
               >
-                <Pencil className="h-4 w-4" />
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-2" align="end" onClick={(e) => e.stopPropagation()}>
-              <Button 
-                size="sm" 
-                variant="ghost"
-                className="w-full justify-start" 
-                onClick={handleEditClick}
-              >
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={handleEditClick}>
                 Edit Project
-              </Button>
-            </PopoverContent>
-          </Popover>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to={`/project/${project.id}`} onClick={handleViewDetailsClick}>
+                  View Details
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         <div className="p-6">
@@ -112,7 +119,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, onEditProject
             </div>
           </div>
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 };
