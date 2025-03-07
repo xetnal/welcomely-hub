@@ -11,7 +11,7 @@ type AuthContextType = {
   loading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (navigate?: boolean) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -136,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (navigateAfterSignOut = true) => {
     try {
       setLoading(true);
       setUser(null);
@@ -152,12 +152,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error("Error during sign out:", error);
       }
       
-      toast({
-        title: "Signed out",
-        description: "You have been signed out successfully",
-      });
-      
-      navigate('/auth');
+      if (navigateAfterSignOut) {
+        toast({
+          title: "Signed out",
+          description: "You have been signed out successfully",
+        });
+        
+        navigate('/auth');
+      }
     } catch (error: any) {
       toast({
         title: "Error signing out",

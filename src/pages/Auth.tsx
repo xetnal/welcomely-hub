@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading: authLoading } = useAuth();
+  const { user, signIn, signUp, signOut, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -19,6 +19,22 @@ const Auth = () => {
   
   // Get the pathname to redirect to after login
   const from = location.state?.from?.pathname || '/';
+
+  // Sign out existing user when navigating to auth page
+  useEffect(() => {
+    const cleanupAuth = async () => {
+      if (!authLoading) {
+        try {
+          await signOut(false); // Pass false to avoid navigation
+          console.log('Signed out existing user on auth page');
+        } catch (error) {
+          console.error('Error signing out on auth page:', error);
+        }
+      }
+    };
+    
+    cleanupAuth();
+  }, [authLoading, signOut]);
 
   // Redirect if user is already authenticated
   if (user && !authLoading) {
