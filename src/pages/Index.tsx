@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PageTransition from '@/components/PageTransition';
 import { Project } from '@/lib/types';
@@ -108,31 +107,25 @@ const Index = () => {
       };
       
       console.log("Data being sent to Supabase:", projectData);
-      console.log("Supabase client setup:", !!supabase);
       
-      // Wrap the insert operation in try/catch to catch any synchronous errors
+      // Simplify the insert operation to reduce potential issues
       try {
-        console.log("Attempting insert operation...");
+        console.log("Starting insert operation...");
         
-        // Set a timeout to detect hangs
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error("Insert operation timed out after 10 seconds")), 10000)
-        );
-        
-        // Race between the actual operation and the timeout
-        const insertResultPromise = supabase
+        // Direct insert without race condition
+        const { data, error } = await supabase
           .from('projects')
-          .insert(projectData);
-          
-        const result = await Promise.race([insertResultPromise, timeoutPromise]);
-        console.log("Insert operation completed, result:", result);
+          .insert(projectData)
+          .select();
         
-        if (result && 'error' in result && result.error) {
-          console.error("Database insertion error:", result.error);
-          throw result.error;
+        console.log("Insert operation completed");
+        
+        if (error) {
+          console.error("Database insertion error:", error);
+          throw error;
         }
         
-        console.log("Project created successfully - refreshing projects");
+        console.log("Project created successfully - result:", data);
         toast.success('Project created successfully');
         
         // Refresh projects from database

@@ -69,7 +69,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       tasks: [],
       description: `Project for ${client}`,
       user_id: user.id,
-      completedStages: [] // Ensure this is properly initialized
+      completedStages: []
     };
 
     try {
