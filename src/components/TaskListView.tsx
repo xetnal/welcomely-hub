@@ -2,8 +2,6 @@
 import React from 'react';
 import { Task } from '@/lib/types';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import PriorityBadge from './PriorityBadge';
 import TaskCard from './TaskCard';
 
 interface TaskListViewProps {

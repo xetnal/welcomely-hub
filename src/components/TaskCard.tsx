@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { Task } from '@/lib/types';
+import { Task, TaskStatus } from '@/lib/types';
 import { format } from 'date-fns';
-import { MessageCircle, MoreHorizontal } from 'lucide-react';
+import { MessageCircle, MoreHorizontal, ChevronDown } from 'lucide-react';
 import PriorityBadge from './PriorityBadge';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -10,6 +10,14 @@ import CommentSection from './CommentSection';
 import { useDrag } from 'react-dnd';
 import DeleteTaskModal from './DeleteTaskModal';
 import EditTaskModal from './EditTaskModal';
+import { 
+  Select, 
+  SelectContent, 
+  SelectGroup, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 
 interface TaskCardProps {
   task: Task;
@@ -37,6 +45,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
       isDragging: !!monitor.isDragging(),
     }),
   }));
+
+  const handleStatusChange = (status: string) => {
+    if (onEditTask) {
+      onEditTask(task.id, { status: status as TaskStatus });
+    }
+  };
 
   return (
     <>
@@ -86,8 +100,24 @@ const TaskCard: React.FC<TaskCardProps> = ({
         
         <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3 break-words">{task.description}</p>
         
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs text-muted-foreground dark:text-gray-400 mb-2 gap-2">
-          <span>Updated {format(task.updated, 'MMM d')}</span>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs text-muted-foreground dark:text-gray-400 mb-3 gap-2">
+          <div className="flex items-center gap-2">
+            <span>Updated {format(task.updated, 'MMM d')}</span>
+            <Select value={task.status} onValueChange={handleStatusChange}>
+              <SelectTrigger className="h-7 w-[110px] text-xs bg-muted/50 dark:bg-gray-700/50 border-none focus:ring-0">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                <SelectGroup>
+                  <SelectItem value="Backlog">Backlog</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Blocked">Blocked</SelectItem>
+                  <SelectItem value="In Review">In Review</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
           {task.assignee && (
             <span className="bg-muted dark:bg-gray-700 px-2 py-1 rounded truncate max-w-full sm:max-w-[120px]">{task.assignee}</span>
           )}
