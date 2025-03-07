@@ -24,13 +24,21 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
 }) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadEmployees = async () => {
       setIsLoading(true);
-      const employeeData = await fetchEmployees();
-      setEmployees(employeeData);
-      setIsLoading(false);
+      setError(null);
+      try {
+        const employeeData = await fetchEmployees();
+        setEmployees(employeeData);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load employees');
+        console.error('Error in EmployeeSelect:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadEmployees();
@@ -49,9 +57,13 @@ const EmployeeSelect: React.FC<EmployeeSelectProps> = ({
           <SelectItem value={defaultOption}>{defaultLabel}</SelectItem>
           {isLoading ? (
             <SelectItem disabled value="loading">Loading employees...</SelectItem>
+          ) : error ? (
+            <SelectItem disabled value="error">Error: {error}</SelectItem>
+          ) : employees.length === 0 ? (
+            <SelectItem disabled value="no-data">No employees found</SelectItem>
           ) : (
             employees.map((employee) => (
-              <SelectItem key={employee.id} value={employee.full_name}>
+              <SelectItem key={employee.id} value={employee.id}>
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
                   {employee.full_name}
