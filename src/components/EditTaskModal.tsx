@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Task } from '@/lib/types';
@@ -61,13 +59,10 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     };
 
     onEditTask(task.id, updatedTask);
-    
-    // Close without the timeout to prevent UI locking
     onOpenChange(false);
     toast.success('Task updated successfully');
   };
 
-  // Safe close modal function - simplified to directly call onOpenChange
   const handleCancel = () => {
     onOpenChange(false);
   };
