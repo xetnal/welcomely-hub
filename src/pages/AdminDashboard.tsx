@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Shield, Save, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -35,6 +36,8 @@ interface UserProfile {
   avatar_url: string | null;
   role: 'Admin' | 'Developer' | 'Sales' | 'Manager' | 'Client';
   email?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const ROLES = ['Admin', 'Developer', 'Sales', 'Manager', 'Client'];
