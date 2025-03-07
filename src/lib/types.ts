@@ -36,6 +36,7 @@ export interface Task {
   created: Date;
   updated: Date;
   isClientTask?: boolean;
+  addComment?: (content: string) => void;
 }
 
 export interface Project {

@@ -6,19 +6,32 @@ import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 interface CommentSectionProps {
   task: Task;
+  onAddComment?: (taskId: string, content: string) => void;
 }
 
-const CommentSection: React.FC<CommentSectionProps> = ({ task }) => {
+const CommentSection: React.FC<CommentSectionProps> = ({ task, onAddComment }) => {
   const [newComment, setNewComment] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    // In a real app, we would add the comment to the task
-    setNewComment('');
+    
+    if (onAddComment) {
+      onAddComment(task.id, newComment.trim());
+      setNewComment('');
+      toast.success('Comment added');
+    } else if (task.addComment) {
+      task.addComment(newComment.trim());
+      setNewComment('');
+      toast.success('Comment added');
+    } else {
+      console.error('No method to add comment provided');
+      toast.error('Unable to add comment');
+    }
   };
 
   return (

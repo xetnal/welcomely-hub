@@ -16,13 +16,15 @@ interface TaskCardProps {
   index: number;
   onDeleteTask?: (taskId: string) => void;
   onEditTask?: (taskId: string, updatedTask: Partial<Task>) => void;
+  onAddComment?: (taskId: string, content: string) => void;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ 
   task, 
   index, 
   onDeleteTask,
-  onEditTask
+  onEditTask,
+  onAddComment
 }) => {
   const [showComments, setShowComments] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -101,7 +103,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         
         {showComments && (
           <div className="mt-3 pt-3 border-t dark:border-gray-700">
-            <CommentSection task={task} />
+            <CommentSection task={task} onAddComment={onAddComment} />
           </div>
         )}
       </motion.div>
