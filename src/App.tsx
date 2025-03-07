@@ -1,33 +1,32 @@
 
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import Index from './pages/Index';
-import Auth from './pages/Auth';
-import AdminUsers from './pages/AdminUsers';
-import ProjectDetail from './pages/ProjectDetail';
-import { Toaster } from '@/components/ui/toaster';
-import Dashboard from './pages/Dashboard';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import Index from "./pages/Index";
+import ProjectDetails from "./pages/ProjectDetails";
+import NotFound from "./pages/NotFound";
 
-function App() {
-  return (
-    <Router>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/project/:projectId" element={<ProjectDetail />} />
-          {/* Placeholder routes for menu items */}
-          <Route path="/clients" element={<AdminUsers />} />
-          <Route path="/analytics" element={<AdminUsers />} />
-          <Route path="/messages" element={<AdminUsers />} />
-        </Routes>
-        <Toaster />
-      </AuthProvider>
-    </Router>
-  );
-}
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/project/:id" element={<ProjectDetails />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AnimatePresence>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

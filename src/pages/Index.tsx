@@ -1,48 +1,164 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { format } from 'date-fns';
+import { Search, Plus, Filter } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import Navbar from '@/components/Navbar';
-import { Layers, Users, BarChart3, MessageSquare, Settings } from 'lucide-react';
+import ProjectCard from '@/components/ProjectCard';
+import { Project } from '@/lib/types';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import Navbar from '@/components/Navbar';
+import AddProjectModal from '@/components/AddProjectModal';
+
+const mockProjects: Project[] = [
+  {
+    id: '1',
+    name: 'Website Redesign',
+    client: 'Acme Corporation',
+    developer: 'Jane Smith',
+    startDate: new Date(2023, 7, 15),
+    endDate: new Date(2023, 9, 30),
+    status: 'active',
+    description: 'Complete website redesign with new branding, improved UX, and mobile-first approach.',
+    tasks: []
+  },
+  {
+    id: '2',
+    name: 'Mobile App Development',
+    client: 'Global Tech',
+    developer: 'John Doe',
+    startDate: new Date(2023, 6, 1),
+    endDate: new Date(2023, 11, 15),
+    status: 'active',
+    description: 'Cross-platform mobile app for iOS and Android with customer portal integration.',
+    tasks: []
+  },
+  {
+    id: '3',
+    name: 'E-commerce Platform',
+    client: 'Fashion Boutique',
+    developer: 'Alex Johnson',
+    startDate: new Date(2023, 5, 10),
+    endDate: new Date(2023, 8, 20),
+    status: 'on-hold',
+    description: 'Custom e-commerce solution with inventory management and payment gateway integration.',
+    tasks: []
+  },
+  {
+    id: '4',
+    name: 'CRM Integration',
+    client: 'Sales Pro',
+    developer: 'Emily Chen',
+    startDate: new Date(2023, 8, 5),
+    endDate: new Date(2024, 1, 15),
+    status: 'active',
+    description: 'Integration of the existing CRM system with new marketing automation tools.',
+    tasks: []
+  },
+  {
+    id: '5',
+    name: 'Business Analytics Dashboard',
+    client: 'Data Insights Inc.',
+    developer: 'Michael Brown',
+    startDate: new Date(2023, 4, 20),
+    endDate: new Date(2023, 7, 10),
+    status: 'completed',
+    description: 'Interactive dashboard for business analytics with real-time data visualization.',
+    tasks: []
+  },
+  {
+    id: '6',
+    name: 'Cloud Migration',
+    client: 'Legacy Systems Co.',
+    developer: 'Sarah Williams',
+    startDate: new Date(2023, 9, 1),
+    endDate: new Date(2024, 2, 28),
+    status: 'active',
+    description: 'Migration of legacy systems to cloud infrastructure with minimal downtime.',
+    tasks: []
+  }
+];
 
 const Index = () => {
-  const menuItems = [
-    { title: 'Projects Dashboard', description: 'Manage and monitor all your projects', icon: <Layers className="h-8 w-8" />, path: '/dashboard' },
-    { title: 'Client Management', description: 'View and manage your clients', icon: <Users className="h-8 w-8" />, path: '/clients' },
-    { title: 'Analytics', description: 'Project performance and statistics', icon: <BarChart3 className="h-8 w-8" />, path: '/analytics' },
-    { title: 'Messages', description: 'Communication with team and clients', icon: <MessageSquare className="h-8 w-8" />, path: '/messages' },
-    { title: 'Admin Settings', description: 'User management and system settings', icon: <Settings className="h-8 w-8" />, path: '/admin/users' },
-  ];
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleAddProject = (newProject: Project) => {
+    // Add the new project to the beginning of the projects array
+    setProjects((prevProjects) => [newProject, ...prevProjects]);
+    console.log("New project created:", newProject); // Add logging for debugging
+  };
+
+  const filteredProjects = projects.filter(project => 
+    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.developer.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      
       <PageTransition className="flex-1 container py-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">Project Management Dashboard</h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Welcome to your central hub for managing projects, clients, and team performance.
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <motion.h1 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-3xl font-bold"
+            >
+              Project Dashboard
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-muted-foreground"
+            >
+              {format(new Date(), 'EEEE, MMMM d, yyyy')}
+            </motion.p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search projects..."
+                className="w-full bg-white/80 border pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <Button variant="outline" size="icon">
+              <Filter className="h-4 w-4" />
+            </Button>
+            
+            <Button 
+              className="flex items-center gap-1"
+              onClick={() => setIsAddProjectModalOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              <span>New Project</span>
+            </Button>
+          </div>
         </div>
-
+        
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {menuItems.map((item, index) => (
-            <Link to={item.path} key={index} className="block">
-              <div className="glass card-hover rounded-xl p-6 flex flex-col items-center text-center hover:shadow-md transition-all">
-                <div className="bg-primary/10 p-4 rounded-full mb-4 text-primary">
-                  {item.icon}
-                </div>
-                <h2 className="text-xl font-medium mb-2">{item.title}</h2>
-                <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
-                <Button variant="outline" className="mt-auto w-full">
-                  Open {item.title.split(' ')[0]}
-                </Button>
-              </div>
-            </Link>
+          {filteredProjects.map((project, index) => (
+            <ProjectCard key={project.id} project={project} index={index} />
           ))}
         </div>
       </PageTransition>
+
+      <AddProjectModal
+        open={isAddProjectModalOpen}
+        onOpenChange={setIsAddProjectModalOpen}
+        onAddProject={handleAddProject}
+      />
     </div>
   );
 };

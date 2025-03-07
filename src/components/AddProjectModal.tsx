@@ -1,14 +1,12 @@
-
 import React, { useState } from 'react';
 import { X, User } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Project } from '@/lib/types';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface AddProjectModalProps {
   open: boolean;
@@ -16,6 +14,7 @@ interface AddProjectModalProps {
   onAddProject: (newProject: Project) => void;
 }
 
+// Mock employees data (should match with the existing ones in AddTaskModal)
 const employees = [
   { id: '1', name: 'Jane Smith' },
   { id: '2', name: 'John Doe' },
@@ -34,17 +33,11 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const [client, setClient] = useState('');
   const [developer, setDeveloper] = useState('Unassigned');
   const [manager, setManager] = useState('Unassigned');
-  const [status, setStatus] = useState<'active' | 'completed' | 'on-hold'>('active');
-  const { user } = useAuth();
+  const [status, setStatus] = useState<'active' | 'completed' | 'on-hold' | 'inactive'>('inactive');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      toast.error('You must be logged in to create a project');
-      return;
-    }
-
     if (!name.trim()) {
       toast.error('Please enter a project name');
       return;
@@ -54,32 +47,27 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       toast.error('Please enter a client name');
       return;
     }
-    
-    console.log("Creating project with user ID:", user.id);
+
+    // Generate a unique ID using timestamp + random string
+    const uniqueId = `p-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     const newProject: Project = {
-      id: '', // This will be set by the database
+      id: uniqueId,
       name,
       client,
       developer: developer === 'Unassigned' ? 'Unassigned' : developer,
-      manager: manager === 'Unassigned' ? null : manager, // Explicitly set to null when unassigned
+      manager: manager === 'Unassigned' ? undefined : manager, // Only include if not Unassigned
       startDate: new Date(),
-      endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
-      status,
+      endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)), // Default 3 months duration
+      status: status === 'inactive' ? 'on-hold' : status, // Map 'inactive' to 'on-hold' as per type definition
       tasks: [],
-      description: `Project for ${client}`,
-      user_id: user.id,
-      completedStages: []
+      description: `Project for ${client}`
     };
 
-    try {
-      onAddProject(newProject);
-      resetForm();
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error in handleSubmit:", error);
-      toast.error('Failed to create project. Please try again.');
-    }
+    onAddProject(newProject);
+    resetForm();
+    onOpenChange(false);
+    toast.success('Project created successfully');
   };
 
   const resetForm = () => {
@@ -87,7 +75,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
     setClient('');
     setDeveloper('Unassigned');
     setManager('Unassigned');
-    setStatus('active');
+    setStatus('inactive');
   };
 
   return (
@@ -95,9 +83,6 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-background">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">Create New Project</DialogTitle>
-          <DialogDescription>
-            Fill out the form below to create a new project.
-          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6 pt-2">
@@ -175,7 +160,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
             <Label htmlFor="status">Project Status</Label>
             <Select
               value={status}
-              onValueChange={(value) => setStatus(value as 'active' | 'completed' | 'on-hold')}
+              onValueChange={(value) => setStatus(value as 'active' | 'completed' | 'on-hold' | 'inactive')}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
@@ -184,6 +169,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="on-hold">On Hold</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -196,10 +182,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
             >
               Cancel
             </Button>
-            <Button 
-              type="submit"
-              disabled={!user}
-            >
+            <Button type="submit">
               Create Project
             </Button>
           </DialogFooter>

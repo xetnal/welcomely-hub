@@ -1,3 +1,4 @@
+
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
 export type ProjectStage = 
@@ -21,8 +22,6 @@ export interface Comment {
   author: string;
   content: string;
   timestamp: Date;
-  task_id?: string;
-  user_id?: string;
 }
 
 export interface Task {
@@ -38,8 +37,6 @@ export interface Task {
   updated: Date;
   isClientTask?: boolean;
   addComment?: (content: string) => void;
-  project_id?: string;
-  user_id?: string;
 }
 
 export interface Project {
@@ -54,5 +51,4 @@ export interface Project {
   tasks: Task[];
   description?: string;
   completedStages?: ProjectStage[];
-  user_id?: string;
 }
