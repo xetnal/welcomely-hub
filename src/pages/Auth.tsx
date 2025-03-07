@@ -8,13 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -22,16 +24,26 @@ const Auth = () => {
   const from = location.state?.from?.pathname || '/';
 
   // Redirect if user is already authenticated
-  if (user && !loading) {
+  if (user && !authLoading) {
     return <Navigate to={from} replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
+    
     try {
       await signIn(email, password);
       // Navigation will happen automatically via the condition above
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in');
+      toast({
+        title: "Error signing in",
+        description: err.message || 'Failed to sign in',
+        variant: "destructive",
+      });
+      console.error("Sign in error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -39,9 +51,23 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
+    
     try {
       await signUp(email, password, fullName);
+      toast({
+        title: "Account created",
+        description: "Please check your email for confirmation",
+      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign up');
+      toast({
+        title: "Error creating account",
+        description: err.message || 'Failed to create account',
+        variant: "destructive",
+      });
+      console.error("Sign up error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -80,6 +106,11 @@ const Auth = () => {
               </CardHeader>
               <form onSubmit={handleSignIn}>
                 <CardContent className="space-y-4">
+                  {error && (
+                    <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm">
+                      {error}
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -104,7 +135,15 @@ const Auth = () => {
                 </CardContent>
                 <CardFooter>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Sign in"}
+                    {isLoading ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Signing in...
+                      </span>
+                    ) : "Sign in"}
                   </Button>
                 </CardFooter>
               </form>
@@ -121,6 +160,11 @@ const Auth = () => {
               </CardHeader>
               <form onSubmit={handleSignUp}>
                 <CardContent className="space-y-4">
+                  {error && (
+                    <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm">
+                      {error}
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
                     <Input
@@ -156,7 +200,15 @@ const Auth = () => {
                 </CardContent>
                 <CardFooter>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Create account"}
+                    {isLoading ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Creating account...
+                      </span>
+                    ) : "Create account"}
                   </Button>
                 </CardFooter>
               </form>

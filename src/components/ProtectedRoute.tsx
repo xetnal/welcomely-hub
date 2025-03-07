@@ -13,13 +13,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [sessionUser, setSessionUser] = useState<any>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
+        
         if (error) {
           console.error("Session check error:", error);
+          setCheckError(error.message);
           setSessionUser(null);
         } else {
           setSessionUser(data.session?.user || null);
@@ -43,9 +46,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   if (loading || isCheckingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-12 w-48 bg-muted rounded-lg mb-4" />
-          <div className="h-6 w-24 bg-muted rounded-lg" />
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Loading your session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If there was an error checking the session
+  if (checkError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-destructive/15 text-destructive p-6 rounded-lg max-w-md">
+          <h3 className="text-lg font-semibold mb-2">Session Error</h3>
+          <p>{checkError}</p>
+          <button 
+            onClick={() => window.location.href = '/auth'} 
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md"
+          >
+            Go to Login
+          </button>
         </div>
       </div>
     );
@@ -53,6 +74,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // If user is not authenticated, redirect to auth page with the intended location
   if (!user && !sessionUser) {
+    console.log("No authenticated user found, redirecting to /auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
