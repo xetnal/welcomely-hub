@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -12,7 +11,7 @@ type AuthContextType = {
   loading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signOut: (navigate?: boolean) => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Helper function to ensure user has a proper profile
   const ensureProfileExists = async (userId: string, fullName: string) => {
     try {
       console.log("Ensuring profile exists for user:", userId, fullName);
@@ -35,45 +35,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // Check for active session on mount
     const checkSession = async () => {
       try {
         setLoading(true);
-        console.log("Checking session...");
         const { data: { session }, error } = await supabase.auth.getSession();
-        
         if (error) {
           console.error("Error getting session:", error);
-          setUser(null);
-          setSession(null);
-        } else {
-          console.log("Session check result:", !!session);
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            const fullName = session.user.user_metadata?.full_name || 'User';
-            console.log("Session user found, ensuring profile exists:", fullName);
-            await ensureProfileExists(session.user.id, fullName);
-          }
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // If we have a user, ensure they have a profile record
+        if (session?.user) {
+          const fullName = session.user.user_metadata?.full_name || 'User';
+          console.log("Session user found, ensuring profile exists:", fullName);
+          await ensureProfileExists(session.user.id, fullName);
         }
       } catch (error) {
         console.error("Unexpected error during session check:", error);
-        setUser(null);
-        setSession(null);
       } finally {
         setLoading(false);
-        console.log("Session check complete, loading set to false");
       }
     };
 
     checkSession();
 
+    // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         console.log("Auth state changed, event:", _event);
         setSession(session);
         setUser(session?.user ?? null);
         
+        // If we have a user, ensure they have a profile record
         if (session?.user) {
           const fullName = session.user.user_metadata?.full_name || 'User';
           console.log("Auth change user found, ensuring profile exists:", fullName);
@@ -81,7 +77,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         setLoading(false);
-        console.log("Auth state change complete, loading set to false");
       }
     );
 
@@ -92,7 +87,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      setLoading(true);
       console.log("Signing up user:", email, fullName);
       const { data, error } = await supabase.auth.signUp({ 
         email, 
@@ -106,6 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log("User signed up successfully:", data);
       
+      // Profiles are created automatically via database trigger
+      // But we still call this to ensure the profile has the correct data
       if (data.user) {
         console.log("Ensuring profile for new user:", data.user.id, fullName);
         const profile = await ensureProfileExists(data.user.id, fullName);
@@ -125,72 +121,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message,
         variant: "destructive",
       });
-      setLoading(false); // Only reset loading on error as success will trigger auth state change
       throw error;
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      setLoading(true);
-      console.log("Signing in user:", email);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      
-      console.log("User signed in successfully:", data);
-      
       toast({
         title: "Welcome back",
         description: "You have successfully signed in",
       });
-      
-      // Don't reset loading here as the auth state change will handle it
     } catch (error: any) {
-      console.error("Error during sign in:", error);
       toast({
         title: "Error signing in",
         description: error.message,
         variant: "destructive",
       });
-      setLoading(false); // Only reset loading on error as success will trigger auth state change
       throw error;
     }
   };
 
-  const signOut = async (navigateAfterSignOut = true) => {
+  const signOut = async () => {
     try {
-      console.log("Starting sign out process, will navigate:", navigateAfterSignOut);
-      setLoading(true);
+      setLoading(true); // Set loading to true during sign out
+      
+      // First, clear the local state regardless of API call success
+      setUser(null);
+      setSession(null);
       
       try {
+        // Now attempt to sign out with Supabase
         const { error } = await supabase.auth.signOut();
         
         if (error) {
           console.error("Error during sign out:", error);
-          throw error;
+          // Even if there's an error, we've already cleared the local state
         }
-        
-        console.log("Sign out from Supabase successful");
       } catch (error: any) {
+        // This catch block handles cases where the session might not exist
         console.error("Error during sign out:", error);
-        throw error;
-      } finally {
-        // Always clear local state regardless of Supabase error
-        setUser(null);
-        setSession(null);
-        console.log("Local auth state cleared");
+        // We've already cleared the local state, so we can continue
       }
       
-      if (navigateAfterSignOut) {
-        toast({
-          title: "Signed out",
-          description: "You have been signed out successfully",
-        });
-        
-        console.log("Navigating to auth page after sign out");
-        navigate('/auth');
-      }
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully",
+      });
+      
+      // Redirect to auth page after successful sign out
+      navigate('/auth');
     } catch (error: any) {
       toast({
         title: "Error signing out",
@@ -198,8 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
-      console.log("Sign out process complete, loading set to false");
+      setLoading(false); // Reset loading state
     }
   };
 

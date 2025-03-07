@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,76 +10,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Auth = () => {
-  const { user, signIn, signUp, signOut, loading: authLoading } = useAuth();
+  const { user, signIn, signUp, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   
   // Get the pathname to redirect to after login
   const from = location.state?.from?.pathname || '/';
 
-  // Reset loading state when auth state changes
-  useEffect(() => {
-    if (!authLoading) {
-      console.log("Auth loading state changed to:", authLoading);
-      setIsLoading(false);
-    }
-  }, [authLoading]);
-
-  // Sign out existing user when navigating to auth page
-  useEffect(() => {
-    const cleanupAuth = async () => {
-      if (user) {
-        try {
-          console.log("Signing out existing user on auth page...");
-          await signOut(false); // Pass false to avoid navigation
-          console.log('Signed out existing user on auth page');
-        } catch (error) {
-          console.error('Error signing out on auth page:', error);
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    cleanupAuth();
-  }, [user, signOut]);
-
   // Redirect if user is already authenticated
-  useEffect(() => {
-    if (user && !authLoading && !isLoading) {
-      console.log('User authenticated, redirecting to:', from);
-      navigate(from, { replace: true });
-    }
-  }, [user, authLoading, from, navigate, isLoading]);
+  if (user && !loading) {
+    return <Navigate to={from} replace />;
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Starting sign in process...");
     setIsLoading(true);
     try {
       await signIn(email, password);
-      // We don't need to navigate here as the useEffect will handle it
-      console.log("Sign in function completed successfully");
-    } catch (error) {
-      console.error('Sign in error:', error);
-      setIsLoading(false); // Make sure to reset loading state on error
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Starting sign up process...");
     setIsLoading(true);
     try {
       await signUp(email, password, fullName);
-      // We don't need to navigate here as the useEffect will handle it
-      console.log("Sign up function completed successfully");
-    } catch (error) {
-      console.error('Sign up error:', error);
-      setIsLoading(false); // Make sure to reset loading state on error
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -139,8 +101,8 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
-                    {isLoading || authLoading ? "Signing in..." : "Sign in"}
+                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
+                    {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </CardFooter>
               </form>
@@ -191,8 +153,8 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
-                    {isLoading || authLoading ? "Creating account..." : "Create account"}
+                  <Button type="submit" className="w-full" disabled={isLoading || loading}>
+                    {isLoading ? "Creating account..." : "Create account"}
                   </Button>
                 </CardFooter>
               </form>

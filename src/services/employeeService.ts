@@ -2,14 +2,14 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
-export interface Profile {
+export interface Employee {
   id: string;
   full_name: string;
   avatar_url?: string;
   user_id?: string;
 }
 
-export const fetchEmployees = async (): Promise<Profile[]> => {
+export const fetchEmployees = async (): Promise<Employee[]> => {
   try {
     const { data, error } = await supabase
       .from('profiles')
@@ -20,25 +20,25 @@ export const fetchEmployees = async (): Promise<Profile[]> => {
       throw error;
     }
     
-    console.log("Fetched profiles:", data);
+    console.log("Fetched employees from profiles table:", data);
     
-    // Map profiles directly to the expected format
-    const profiles: Profile[] = data.map(profile => ({
+    // Map profiles directly to the employee format
+    const employees: Employee[] = data.map(profile => ({
       id: profile.id,
       full_name: profile.full_name || 'Unnamed User',
       avatar_url: profile.avatar_url,
       user_id: profile.id // The id in profiles is the user_id
     }));
     
-    return profiles || [];
+    return employees || [];
   } catch (error: any) {
-    console.error('Error fetching profiles:', error);
-    toast.error('Failed to load profiles');
+    console.error('Error fetching employees:', error);
+    toast.error('Failed to load employees');
     return [];
   }
 };
 
-export const createEmployee = async (userId: string, fullName: string): Promise<Profile | null> => {
+export const createEmployee = async (userId: string, fullName: string): Promise<Employee | null> => {
   try {
     console.log("Creating/updating profile with userId:", userId, "fullName:", fullName);
     
@@ -79,7 +79,7 @@ export const createEmployee = async (userId: string, fullName: string): Promise<
         };
       }
       
-      // Return the existing profile
+      // Return the existing profile in employee format
       return {
         id: existingProfile.id,
         full_name: existingProfile.full_name || fullName,
@@ -105,7 +105,7 @@ export const createEmployee = async (userId: string, fullName: string): Promise<
     
     console.log("Successfully created profile:", data);
     
-    // Return the profile
+    // Return in employee format
     return {
       id: data.id,
       full_name: data.full_name || fullName,
