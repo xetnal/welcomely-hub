@@ -12,8 +12,8 @@ export interface Employee {
 export const fetchEmployees = async (): Promise<Employee[]> => {
   try {
     const { data, error } = await supabase
-      .from('employees')
-      .select('id, full_name, avatar_url, user_id')
+      .from('profiles')
+      .select('id, full_name, avatar_url')
       .limit(100);
     
     if (error) {
@@ -21,7 +21,16 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
     }
     
     console.log("Fetched employees:", data);
-    return data || [];
+    
+    // Convert profiles to the employee format
+    const employees: Employee[] = data.map(profile => ({
+      id: profile.id,
+      full_name: profile.full_name || 'Unnamed User',
+      avatar_url: profile.avatar_url,
+      user_id: profile.id // The id in profiles is the user_id
+    }));
+    
+    return employees || [];
   } catch (error: any) {
     console.error('Error fetching employees:', error);
     toast.error('Failed to load employees');
@@ -31,43 +40,80 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
 
 export const createEmployee = async (userId: string, fullName: string): Promise<Employee | null> => {
   try {
-    console.log("Creating employee with userId:", userId, "fullName:", fullName);
+    console.log("Creating/updating profile with userId:", userId, "fullName:", fullName);
     
-    // First check if employee already exists to avoid duplicates
-    const { data: existingEmployee, error: checkError } = await supabase
-      .from('employees')
+    // First check if profile already exists to avoid duplicates
+    const { data: existingProfile, error: checkError } = await supabase
+      .from('profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .maybeSingle();
     
     if (checkError) {
-      console.error('Error checking existing employee:', checkError);
+      console.error('Error checking existing profile:', checkError);
       throw checkError;
     }
     
-    if (existingEmployee) {
-      console.log("Employee already exists, returning:", existingEmployee);
-      return existingEmployee;
+    if (existingProfile) {
+      console.log("Profile already exists, updating if needed:", existingProfile);
+      
+      // If the full_name is missing, update it
+      if (!existingProfile.full_name) {
+        const { data: updatedProfile, error: updateError } = await supabase
+          .from('profiles')
+          .update({ full_name: fullName })
+          .eq('id', userId)
+          .select()
+          .single();
+          
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
+          throw updateError;
+        }
+        
+        return {
+          id: updatedProfile.id,
+          full_name: updatedProfile.full_name || fullName,
+          avatar_url: updatedProfile.avatar_url,
+          user_id: updatedProfile.id
+        };
+      }
+      
+      // Return the existing profile in employee format
+      return {
+        id: existingProfile.id,
+        full_name: existingProfile.full_name || fullName,
+        avatar_url: existingProfile.avatar_url,
+        user_id: existingProfile.id
+      };
     }
     
-    // Create the employee if it doesn't exist
+    // Create the profile if it doesn't exist
+    // Note: This should rarely happen since profiles are created by a trigger when users sign up
     const { data, error } = await supabase
-      .from('employees')
+      .from('profiles')
       .insert([
-        { user_id: userId, full_name: fullName }
+        { id: userId, full_name: fullName }
       ])
       .select()
       .single();
     
     if (error) {
-      console.error('Error creating employee:', error);
+      console.error('Error creating profile:', error);
       throw error;
     }
     
-    console.log("Successfully created employee:", data);
-    return data;
+    console.log("Successfully created profile:", data);
+    
+    // Return in employee format
+    return {
+      id: data.id,
+      full_name: data.full_name || fullName,
+      avatar_url: data.avatar_url,
+      user_id: data.id
+    };
   } catch (error: any) {
-    console.error('Error creating employee:', error);
+    console.error('Error creating/updating profile:', error);
     // Don't show a toast here as this might be called during authentication
     return null;
   }

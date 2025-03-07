@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -24,34 +23,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Helper function to create an employee for a user
-  const ensureEmployeeExists = async (userId: string, fullName: string) => {
+  // Helper function to ensure user has a proper profile
+  const ensureProfileExists = async (userId: string, fullName: string) => {
     try {
-      console.log("Ensuring employee exists for user:", userId, fullName);
-      // Check if employee already exists for this user
-      const { data, error } = await supabase
-        .from('employees')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error checking if employee exists:', error);
-        throw error;
-      }
-
-      // If employee doesn't exist, create one
-      if (!data) {
-        console.log("No employee found, creating one for user:", userId);
-        const newEmployee = await createEmployee(userId, fullName);
-        console.log("Employee created:", newEmployee);
-        return newEmployee;
-      } else {
-        console.log("Employee already exists for user:", userId);
-        return data;
-      }
+      console.log("Ensuring profile exists for user:", userId, fullName);
+      return await createEmployee(userId, fullName);
     } catch (error) {
-      console.error('Error ensuring employee exists:', error);
+      console.error('Error ensuring profile exists:', error);
       return null;
     }
   };
@@ -69,11 +47,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // If we have a user, ensure they have an employee record
+        // If we have a user, ensure they have a profile record
         if (session?.user) {
           const fullName = session.user.user_metadata?.full_name || 'User';
-          console.log("Session user found, ensuring employee exists:", fullName);
-          await ensureEmployeeExists(session.user.id, fullName);
+          console.log("Session user found, ensuring profile exists:", fullName);
+          await ensureProfileExists(session.user.id, fullName);
         }
       } catch (error) {
         console.error("Unexpected error during session check:", error);
@@ -91,11 +69,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // If we have a user, ensure they have an employee record
+        // If we have a user, ensure they have a profile record
         if (session?.user) {
           const fullName = session.user.user_metadata?.full_name || 'User';
-          console.log("Auth change user found, ensuring employee exists:", fullName);
-          await ensureEmployeeExists(session.user.id, fullName);
+          console.log("Auth change user found, ensuring profile exists:", fullName);
+          await ensureProfileExists(session.user.id, fullName);
         }
         
         setLoading(false);
@@ -122,11 +100,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log("User signed up successfully:", data);
       
-      // Create employee record for the new user if we have a user
+      // Profiles are created automatically via database trigger
+      // But we still call this to ensure the profile has the correct data
       if (data.user) {
-        console.log("Creating employee for new user:", data.user.id, fullName);
-        const employee = await createEmployee(data.user.id, fullName);
-        console.log("Employee created during signup:", employee);
+        console.log("Ensuring profile for new user:", data.user.id, fullName);
+        const profile = await ensureProfileExists(data.user.id, fullName);
+        console.log("Profile status for new signup:", profile);
       } else {
         console.warn("No user object returned from signUp");
       }
