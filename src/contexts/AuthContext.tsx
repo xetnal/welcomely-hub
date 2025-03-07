@@ -125,13 +125,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log("Signing in user:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
       if (error) throw error;
+      
+      console.log("User signed in successfully:", data);
+      
       toast({
         title: "Welcome back",
         description: "You have successfully signed in",
       });
+      
+      // Don't reset loading here as the auth state change will handle it
     } catch (error: any) {
+      console.error("Error during sign in:", error);
       toast({
         title: "Error signing in",
         description: error.message,

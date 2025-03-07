@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Get the pathname to redirect to after login
   const from = location.state?.from?.pathname || '/';
@@ -44,15 +45,19 @@ const Auth = () => {
   }, [authLoading, signOut]);
 
   // Redirect if user is already authenticated
-  if (user && !authLoading) {
-    return <Navigate to={from} replace />;
-  }
+  useEffect(() => {
+    if (user && !authLoading && !isLoading) {
+      console.log('User authenticated, redirecting to:', from);
+      navigate(from, { replace: true });
+    }
+  }, [user, authLoading, from, navigate, isLoading]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await signIn(email, password);
+      // We don't need to navigate here as the useEffect will handle it
     } catch (error) {
       console.error('Sign in error:', error);
       setIsLoading(false); // Make sure to reset loading state on error
@@ -64,6 +69,7 @@ const Auth = () => {
     setIsLoading(true);
     try {
       await signUp(email, password, fullName);
+      // We don't need to navigate here as the useEffect will handle it
     } catch (error) {
       console.error('Sign up error:', error);
       setIsLoading(false); // Make sure to reset loading state on error
