@@ -72,7 +72,7 @@ const Navbar = () => {
               <div className="h-8 w-8 rounded-full bg-background dark:bg-gray-900 absolute"></div>
               <img 
                 src="/lovable-uploads/22886747-a1b6-4177-9722-48875351f084.png" 
-                alt="Workflow Hub Logo" 
+                alt="Welcomely Hub Logo" 
                 className="h-8 w-auto relative z-10"
                 style={{ mixBlendMode: isDarkMode ? 'screen' : 'multiply' }}
               />
@@ -83,7 +83,7 @@ const Navbar = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="font-medium"
             >
-              Workflow Hub
+              Welcomely Hub
             </motion.span>
           </Link>
           

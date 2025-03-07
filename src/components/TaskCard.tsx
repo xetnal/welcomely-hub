@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Task, TaskStatus } from '@/lib/types';
 import { format } from 'date-fns';
 import { MessageCircle, MoreHorizontal, User } from 'lucide-react';
@@ -24,6 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { fetchEmployees, Employee } from '@/services/employeeService';
 
 interface TaskCardProps {
   task: Task;
@@ -43,6 +44,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const [showComments, setShowComments] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [assigneeName, setAssigneeName] = useState<string | undefined>(task.assignee);
   
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'task',
@@ -51,6 +54,27 @@ const TaskCard: React.FC<TaskCardProps> = ({
       isDragging: !!monitor.isDragging(),
     }),
   }));
+
+  useEffect(() => {
+    const loadEmployees = async () => {
+      try {
+        const employeeData = await fetchEmployees();
+        setEmployees(employeeData);
+        
+        // Find the employee name if task.assignee is an ID
+        if (task.assignee && !task.assignee.includes('@') && task.assignee !== 'Unassigned') {
+          const employee = employeeData.find(emp => emp.id === task.assignee);
+          if (employee) {
+            setAssigneeName(employee.full_name);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading employees in TaskCard:', err);
+      }
+    };
+
+    loadEmployees();
+  }, [task.assignee]);
 
   const handleStatusChange = (status: string) => {
     if (onEditTask) {
@@ -132,18 +156,18 @@ const TaskCard: React.FC<TaskCardProps> = ({
           </div>
           
           {/* Row 3: Assignee with tooltip for long names */}
-          {task.assignee && (
+          {assigneeName && (
             <div className="flex items-center">
               <User className="h-3 w-3 mr-1" />
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="bg-muted dark:bg-gray-700 px-2 py-1 rounded truncate max-w-full sm:max-w-[200px]">
-                      {task.assignee}
+                      {assigneeName}
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{task.assignee}</p>
+                    <p>{assigneeName}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
