@@ -70,7 +70,8 @@ const Index = () => {
         status: project.status,
         description: project.description,
         tasks: [],
-        completedStages: project.completed_stages || []
+        completedStages: project.completed_stages || [],
+        user_id: project.user_id
       })) : [];
 
       setProjects(transformedProjects);
@@ -89,6 +90,8 @@ const Index = () => {
         return;
       }
 
+      console.log("Submitting project to database:", newProject);
+
       // Transform Project to database format
       const { data, error } = await supabase
         .from('projects')
@@ -101,13 +104,18 @@ const Index = () => {
           start_date: newProject.startDate.toISOString(),
           end_date: newProject.endDate.toISOString(),
           status: newProject.status,
-          user_id: user?.id,
+          user_id: user.id,
           completed_stages: []
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
+      
+      console.log("Project created successfully:", data);
       
       // Add new project to state with correct format
       const addedProject: Project = {
@@ -121,7 +129,8 @@ const Index = () => {
         status: data.status,
         description: data.description,
         tasks: [],
-        completedStages: data.completed_stages || []
+        completedStages: data.completed_stages || [],
+        user_id: data.user_id
       };
       
       setProjects(prevProjects => [addedProject, ...prevProjects]);

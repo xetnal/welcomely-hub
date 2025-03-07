@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { X, User } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +15,6 @@ interface AddProjectModalProps {
   onAddProject: (newProject: Project) => void;
 }
 
-// Mock employees data (should match with the existing ones in AddTaskModal)
 const employees = [
   { id: '1', name: 'Jane Smith' },
   { id: '2', name: 'John Doe' },
@@ -56,6 +54,8 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       return;
     }
     
+    console.log("Creating project with user ID:", user.id);
+    
     const newProject: Project = {
       id: '', // This will be set by the database
       name,
@@ -70,9 +70,14 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       user_id: user.id
     };
 
-    onAddProject(newProject);
-    resetForm();
-    onOpenChange(false);
+    try {
+      onAddProject(newProject);
+      resetForm();
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+      toast.error('Failed to create project. Please try again.');
+    }
   };
 
   const resetForm = () => {
@@ -88,6 +93,9 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-background">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">Create New Project</DialogTitle>
+          <DialogDescription>
+            Fill out the form below to create a new project.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6 pt-2">
