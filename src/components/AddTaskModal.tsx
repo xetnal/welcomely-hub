@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ProjectStage } from '@/lib/types';
+import { ProjectStage, Priority } from '@/lib/types';
 import { toast } from 'sonner';
 import FormField from './forms/FormField';
 import FormActions from './forms/FormActions';
@@ -28,7 +28,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('medium' as const);
+  const [priority, setPriority] = useState<Priority>('medium');
   const [assignee, setAssignee] = useState('unassigned');
   const [isClientTask, setIsClientTask] = useState(true);
 
@@ -66,6 +66,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
     setPriority('medium');
     setAssignee('unassigned');
     setIsClientTask(true);
+  };
+
+  const handlePriorityChange = (value: Priority) => {
+    setPriority(value);
   };
 
   return (
@@ -112,7 +116,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
           </FormField>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <PrioritySelect value={priority} onChange={setPriority} />
+            <PrioritySelect value={priority} onChange={handlePriorityChange} />
             <EmployeeSelect
               id="assignee"
               label="Assignee"
