@@ -44,11 +44,14 @@ const Navbar = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5 }}
+              className="relative flex items-center justify-center"
             >
+              <div className="h-8 w-8 rounded-full bg-background dark:bg-gray-900 absolute"></div>
               <img 
                 src="/lovable-uploads/22886747-a1b6-4177-9722-48875351f084.png" 
                 alt="Workflow Hub Logo" 
-                className="h-8 w-auto"
+                className="h-8 w-auto relative z-10"
+                style={{ mixBlendMode: 'multiply' }}
               />
             </motion.div>
             <motion.span 
