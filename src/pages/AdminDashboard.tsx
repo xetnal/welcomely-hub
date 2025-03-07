@@ -106,28 +106,35 @@ const AdminDashboard = () => {
     setSavingChanges(true);
     try {
       // Process one role update at a time to better identify errors
-      const results = [];
-      
       for (const [userId, role] of Object.entries(pendingChanges)) {
         console.log(`Updating user ${userId} to role ${role}`);
+        
+        // First, update in the profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ role: role })
+          .eq('id', userId);
+          
+        if (profileError) {
+          console.error(`Error updating profile for user ${userId}:`, profileError);
+          throw new Error(`Failed to update profile for user ${userId}: ${profileError.message}`);
+        }
+
+        // Then update in user_roles table through RPC
         const { data, error } = await supabase.rpc('update_user_role', { 
           target_user_id: userId, 
           new_role: role 
         });
         
         if (error) {
-          console.error(`Error updating user ${userId}:`, error);
+          console.error(`Error updating user role ${userId}:`, error);
           throw new Error(`Failed to update user ${userId}: ${error.message}`);
         }
         
-        if (!data) {
-          console.error(`No data returned for user ${userId}`);
-          throw new Error(`Failed to update user ${userId}: No data returned`);
-        }
-        
-        results.push({ userId, success: true });
+        console.log(`Role update response:`, data);
       }
 
+      // Update local state with new roles
       setUsers(users.map((user) => {
         if (pendingChanges[user.id]) {
           return { ...user, role: pendingChanges[user.id] as any };
@@ -240,7 +247,7 @@ const AdminDashboard = () => {
                       <TableCell>{user.email || 'No email available'}</TableCell>
                       <TableCell>
                         <Select
-                          value={pendingChanges[user.id] || user.role}
+                          value={pendingChanges[user.id] || user.role || ''}
                           onValueChange={(value) => handleRoleChange(user.id, value)}
                         >
                           <SelectTrigger className="w-[180px]">
