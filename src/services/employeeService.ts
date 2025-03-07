@@ -10,6 +10,7 @@ export interface Employee {
 
 export const fetchEmployees = async (): Promise<Employee[]> => {
   try {
+    console.log("Fetching employees from profiles table");
     const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url')
